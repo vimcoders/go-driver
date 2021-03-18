@@ -9,8 +9,13 @@ type Logger interface {
 }
 
 type Message interface {
-	Header() []byte
-	Payload() []byte
-	Protocol() uint16
-	Version() uint8
+	ToMessage() (msg []byte, err error)
+}
+
+type Session interface {
+	SessionID() int64
+	Set(key, value interface{}) error
+	Get(key interface{}) interface{}
+	Delete(key interface{}) error
+	Write(pkg Message) (err error)
 }
