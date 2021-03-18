@@ -17,9 +17,9 @@ type Message interface {
 }
 
 type Session interface {
-	SessionID() string
+	SessionID() int64
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Send(msg Message)
+	Send(msg Message) (err error)
 }
