@@ -10,7 +10,16 @@ type Logger interface {
 
 type Message interface {
 	Header() []byte
-	Payload() []byte
-	Protocol() uint16
+	Length() int32
 	Version() uint8
+	Protocol() uint16
+	Payload() []byte
+}
+
+type Session interface {
+	SessionID() string
+	Set(key, value interface{}) error
+	Get(key interface{}) interface{}
+	Delete(key interface{}) error
+	Send(msg Message)
 }
