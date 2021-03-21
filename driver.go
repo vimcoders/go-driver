@@ -21,5 +21,13 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Send(msg Message) (err error)
+	Write(pkg Message) (err error)
+}
+
+type Reader interface {
+	Read() (Message, error)
+}
+
+type Writer interface {
+	Write(msg Message) error
 }
