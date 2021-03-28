@@ -11,8 +11,6 @@ type Logger interface {
 type Message interface {
 	Header() []byte
 	Length() int32
-	Version() uint8
-	Protocol() uint16
 	Payload() []byte
 }
 
