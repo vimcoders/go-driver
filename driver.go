@@ -10,7 +10,6 @@ type Logger interface {
 
 type Message interface {
 	Header() []byte
-	Length() int32
 	Payload() []byte
 }
 
