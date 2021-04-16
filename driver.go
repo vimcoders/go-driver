@@ -11,7 +11,7 @@ type Logger interface {
 }
 
 type Message interface {
-	ToMessage() (msg []byte, err error)
+	ToBytes() (b []byte, err error)
 }
 
 type Session interface {
