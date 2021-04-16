@@ -15,14 +15,14 @@ type Message interface {
 }
 
 type Session interface {
-	Writer
+	WriteCloser
 	SessionID() int64
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	io.Closer
 }
 
-type Writer interface {
+type WriteCloser interface {
 	Write(pkg Message) (err error)
+	io.Closer
 }
