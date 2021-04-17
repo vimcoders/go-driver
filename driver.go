@@ -15,11 +15,11 @@ type Message interface {
 }
 
 type Session interface {
-	WriteCloser
 	SessionID() int64
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
+	Conn
 }
 
 type Conn interface {
