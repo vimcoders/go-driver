@@ -22,7 +22,7 @@ type Session interface {
 	Delete(key interface{}) error
 }
 
-type WriteCloser interface {
+type Conn interface {
 	Write(pkg Message) (err error)
 	io.Closer
 }
