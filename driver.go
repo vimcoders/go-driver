@@ -1,7 +1,5 @@
 package driver
 
-import "io"
-
 type Logger interface {
 	Debug(format string, v ...interface{})
 	Info(format string, v ...interface{})
@@ -15,14 +13,13 @@ type Message interface {
 }
 
 type Session interface {
-	WriteCloser
 	SessionID() int64
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
+	Writer
 }
 
-type Conn interface {
+type Writer interface {
 	Write(pkg Message) (err error)
-	io.Closer
 }
