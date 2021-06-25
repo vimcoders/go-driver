@@ -1,43 +1,44 @@
 # go-driver
 日志
 
-type Logger interface {
+
+	type Logger interface {
 	
-	Debug(format string, v ...interface{})
+		Debug(format string, v ...interface{})
 	
-	Info(format string, v ...interface{})
+		Info(format string, v ...interface{})
 	
-	Warning(format string, v ...interface{})
+		Warning(format string, v ...interface{})
 	
-	Error(format string, v ...interface{})
+		Error(format string, v ...interface{})
 	
-	Close() (err error)
-}
+		Close() (err error)
+	}
 
 网络包
 
-type Message interface {
+	type Message interface {
 	
-	ToBytes() (b []byte, err error)
-}
+		ToBytes() (b []byte, err error)
+	}
 
 加密包，解密包
 接收包，发送包
 
-type Session interface {
+	type Session interface {
 	
-	SessionID() int64
+		SessionID() int64
 	
-	Set(key, value interface{}) error
+		Set(key, value interface{}) error
 	
-	Get(key interface{}) interface{}
+		Get(key interface{}) interface{}
 	
-	Delete(key interface{}) error
+		Delete(key interface{}) error
 	
-	Writer
-}
+		Writer
+	}
 
-type Writer interface {
+	type Writer interface {
 	
-	Write(pkg Message) (err error)
-}
+		Write(pkg Message) (err error)
+	}
