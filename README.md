@@ -1,5 +1,6 @@
 # go-driver
 日志
+
 type Logger interface {
 	Debug(format string, v ...interface{})
 	Info(format string, v ...interface{})
@@ -7,11 +8,16 @@ type Logger interface {
 	Error(format string, v ...interface{})
 	Close() (err error)
 }
+
 网络包
+
 type Message interface {
 	ToBytes() (b []byte, err error)
 }
-面向连接
+
+加密包，解密包
+接收包，发送包
+
 type Session interface {
 	SessionID() int64
 	Set(key, value interface{}) error
