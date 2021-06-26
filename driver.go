@@ -17,9 +17,5 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Writer
-}
-
-type Writer interface {
 	Write(pkg Message) (err error)
 }
