@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"context"
+	"database/sql"
 )
 
 type Logger interface {
@@ -25,30 +25,17 @@ type Session interface {
 }
 
 type Connector interface {
-	Tx(ctx context.Context) (Tx, error)
-	Conn(ctx context.Context) (Conn, error)
+	Execer
 	SetMaxOpenConns(n int)
 	Close() error
 }
 
-type Tx interface {
-	Exec(obj Object) (interface{}, error)
-	ExecContext(ctx context.Context, obj Object) (interface{}, error)
-	Rollback() (err error)
-	Commit() (err error)
-}
-
-type Conn interface {
-	Exec(obj Object) (interface{}, error)
-	ExecContext(ctx context.Context, obj Object) (interface{}, error)
-	Tx(ctx context.Context) (Tx, error)
-	Close() (err error)
-}
-
-type Object interface {
-	Table
-	Convert() (sql string, args []interface{})
+type Scanner interface {
 	Scan(scanner func(dest ...interface{}) error) error
+}
+
+type Convertor interface {
+	Convert() (sql string, args []interface{})
 }
 
 type Table interface {
@@ -56,9 +43,15 @@ type Table interface {
 }
 
 type Marshaler interface {
-	Marshal(str string, err error)
+	Marshal() (str string, err error)
 }
 
 type Unmarshaler interface {
 	Unmarshal(str string) error
+}
+
+type Result sql.Result
+
+type Execer interface {
+	Exec(c ...Convertor) error
 }
