@@ -1,6 +1,7 @@
 package driver
 
 import (
+	"context"
 	"database/sql"
 )
 
@@ -25,7 +26,7 @@ type Session interface {
 }
 
 type Connector interface {
-	Execer
+	Tx(ctx context.Context) (Execer, error)
 	SetMaxOpenConns(n int)
 	Close() error
 }
@@ -53,5 +54,5 @@ type Unmarshaler interface {
 type Result sql.Result
 
 type Execer interface {
-	Exec(c ...Convertor) error
+	Exec(c ...Convertor) (Result, error)
 }
