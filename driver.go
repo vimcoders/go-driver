@@ -2,7 +2,6 @@ package driver
 
 import (
 	"context"
-	"database/sql"
 )
 
 type Logger interface {
@@ -31,9 +30,7 @@ type Connector interface {
 	Close() error
 }
 
-type Result sql.Result
-
 type Execer interface {
-	Exec(i ...interface{}) (Result, error)
-	ExecContext(ctx context.Context, i ...interface{}) (Result, error)
+	Exec(i ...interface{}) (interface{}, error)
+	ExecContext(ctx context.Context, i ...interface{}) (interface{}, error)
 }
