@@ -21,7 +21,7 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Write(pkg Message) (err error)
+	Send(pkg Message) (err error)
 }
 
 type Connector interface {
