@@ -1,5 +1,9 @@
 package driver
 
+import (
+	"context"
+)
+
 type Logger interface {
 	Debug(format string, v ...interface{})
 	Info(format string, v ...interface{})
@@ -9,8 +13,7 @@ type Logger interface {
 }
 
 type Message interface {
-	Header() []byte
-	Payload() []byte
+	ToBytes() (b []byte, err error)
 }
 
 type Session interface {
@@ -18,7 +21,7 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Write(pkg Message) (err error)
+	Writer
 }
 
 type Reader interface {
@@ -27,4 +30,15 @@ type Reader interface {
 
 type Writer interface {
 	Write(msg Message) error
+}
+
+type Connector interface {
+	Tx(ctx context.Context) (Execer, error)
+	SetMaxOpenConns(n int)
+	Close() error
+}
+
+type Execer interface {
+	Exec(i ...interface{}) (interface{}, error)
+	ExecContext(ctx context.Context, i ...interface{}) (interface{}, error)
 }
