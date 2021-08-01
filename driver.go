@@ -25,7 +25,7 @@ type Session interface {
 }
 
 type Reader interface {
-	Read() (Message, error)
+	Read() ([]byte, error)
 }
 
 type Writer interface {
