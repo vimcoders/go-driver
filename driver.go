@@ -2,6 +2,7 @@ package driver
 
 import (
 	"context"
+	"io"
 )
 
 type Logger interface {
@@ -21,15 +22,13 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Writer
+	Reader
+	io.Closer
+	io.Writer
 }
 
 type Reader interface {
 	Read() ([]byte, error)
-}
-
-type Writer interface {
-	Write(msg Message) error
 }
 
 type Connector interface {
