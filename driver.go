@@ -22,13 +22,8 @@ type Session interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Reader
 	io.Closer
 	io.Writer
-}
-
-type Reader interface {
-	Read() ([]byte, error)
 }
 
 type Connector interface {
