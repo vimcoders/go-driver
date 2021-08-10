@@ -28,6 +28,7 @@ type Session interface {
 
 type Reader interface {
 	Read() (p []byte, err error)
+	Discard(n int) (discarded int, err error)
 }
 
 type Connector interface {
