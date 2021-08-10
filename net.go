@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-type Writer struct {
+type writer struct {
 	net.Conn
 	*bytes.Buffer
 	t time.Duration
 }
 
-func (w *Writer) Write(p []byte) (n int, err error) {
+func (w *writer) Write(p []byte) (n int, err error) {
 	defer w.Reset()
 
 	length := len(p)
@@ -39,17 +39,17 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 	return w.Conn.Write(w.Buffer.Bytes())
 }
 
-func NewWriter(c net.Conn) io.Writer {
-	return &Writer{c, bytes.NewBuffer(make([]byte, 256)), time.Second * 15}
+func NewWriter(c net.Conn, b *bytes.Buffer, t time.Duration) io.Writer {
+	return &writer{c, b, t}
 }
 
-type Reader struct {
+type reader struct {
 	net.Conn
 	*bufio.Reader
 	t time.Duration
 }
 
-func (r *Reader) Read() (p []byte, err error) {
+func (r *reader) Read() (p []byte, err error) {
 	header := make([]byte, 2)
 
 	if err := r.SetReadDeadline(time.Now().Add(r.t)); err != nil {
@@ -69,6 +69,6 @@ func (r *Reader) Read() (p []byte, err error) {
 	return r.Reader.Peek(int(length))
 }
 
-func NewReader(c net.Conn) *Reader {
-	return &Reader{c, bufio.NewReaderSize(c, 512), time.Second * 5}
+func NewReader(c net.Conn, b *bufio.Reader, t time.Duration) Reader {
+	return &reader{c, b, t}
 }

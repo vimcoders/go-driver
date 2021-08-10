@@ -26,6 +26,10 @@ type Session interface {
 	io.Writer
 }
 
+type Reader interface {
+	Read() (p []byte, err error)
+}
+
 type Connector interface {
 	Tx(ctx context.Context) (Execer, error)
 	SetMaxOpenConns(n int)
