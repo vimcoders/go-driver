@@ -13,10 +13,6 @@ type Logger interface {
 	Close() (err error)
 }
 
-type Message interface {
-	ToBytes() (b []byte, err error)
-}
-
 type Session interface {
 	SessionID() int64
 	Set(key, value interface{}) error
@@ -24,11 +20,6 @@ type Session interface {
 	Delete(key interface{}) error
 	io.Closer
 	io.Writer
-}
-
-type Reader interface {
-	Read() (p []byte, err error)
-	Discard(n int) (discarded int, err error)
 }
 
 type Connector interface {
