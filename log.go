@@ -1,12 +1,10 @@
-package log
+package driver
 
 import (
 	"fmt"
 	"log"
 	"os"
 	"runtime/debug"
-
-	"github.com/vimcoders/go-driver"
 )
 
 var logger = NewSyslogger()
@@ -62,6 +60,6 @@ func (log *Syslogger) Close() error {
 	return nil
 }
 
-func NewSyslogger() driver.Logger {
+func NewSyslogger() Logger {
 	return &Syslogger{log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)}
 }
