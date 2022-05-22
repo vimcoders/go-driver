@@ -2,7 +2,6 @@ package driver
 
 import (
 	"context"
-	"io"
 )
 
 type Logger interface {
@@ -11,15 +10,6 @@ type Logger interface {
 	Warning(format string, v ...interface{})
 	Error(format string, v ...interface{})
 	Close() (err error)
-}
-
-type Session interface {
-	SessionID() int64
-	Set(key, value interface{}) error
-	Get(key interface{}) interface{}
-	Delete(key interface{}) error
-	io.Closer
-	io.Writer
 }
 
 type Connector interface {
