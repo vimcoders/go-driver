@@ -1,14 +1,12 @@
 package session
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/vimcoders/go-driver/log"
 	"golang.org/x/net/websocket"
 )
 
@@ -31,17 +29,26 @@ func TestHelloWorld(t *testing.T) {
 		}
 		s := &Session{
 			Conn: c,
-			C:    make(chan []byte, 2),
+			C:    make(chan []byte, 1),
 		}
 		s.OnMessage = func(b []byte) error {
-			log.Debug("message2 %v", string(b))
+			t.Log(string(b))
 			return nil
 		}
-		go s.Pull(context.Background())
-		go s.Push(context.Background())
+		go func() {
+			if err := s.Pull(); err != nil {
+				t.Log(err)
+			}
+		}()
+		go func() {
+			if err := s.Push(); err != nil {
+				t.Log(err)
+			}
+		}()
 		go func() {
 			defer waitGroup.Done()
 			for k := 0; k < 100; k++ {
+				s.C <- []byte("hello")
 				time.Sleep(time.Second)
 			}
 		}()
@@ -60,18 +67,16 @@ func TestWebSocket(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		closeCtx, closeFunc := context.WithCancel(context.Background())
 		s := &Session{
-			Conn:       ws,
-			C:          make(chan []byte, 1),
-			CancelFunc: closeFunc,
+			Conn: ws,
+			C:    make(chan []byte, 1),
 		}
 		s.OnMessage = func(b []byte) error {
-			log.Info("onmessage %v", b)
+			t.Log(string(b))
 			return nil
 		}
-		go s.Pull(closeCtx)
-		go s.Push(closeCtx)
+		go s.Pull()
+		go s.Push()
 		go func() {
 			defer waitGroup.Done()
 			defer s.Close()

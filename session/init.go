@@ -23,34 +23,46 @@ func init_tcp() {
 			if err != nil {
 				continue
 			}
-			closeCtx, closeFunc := context.WithCancel(context.Background())
 			s := &Session{
-				Conn:       c,
-				C:          make(chan []byte, 1),
-				CancelFunc: closeFunc,
+				Conn: c,
+				C:    make(chan []byte, 1),
 			}
 			s.OnMessage = func(b []byte) error {
+				s.C <- []byte("response")
 				return nil
 			}
-			go s.Pull(closeCtx)
-			go s.Push(closeCtx)
+			go func() {
+				if err := s.Pull(); err != nil {
+					panic(err)
+				}
+			}()
+			go func() {
+				if err := s.Push(); err != nil {
+					panic(err)
+				}
+			}()
 		}
 	}()
 }
 
 func init_websocket() {
 	http.Handle("/ws", websocket.Handler(func(ws *websocket.Conn) {
-		closeCtx, closeFunc := context.WithCancel(context.Background())
 		s := &Session{
-			Conn:       ws,
-			C:          make(chan []byte, 1),
-			CancelFunc: closeFunc,
+			Conn: ws,
+			C:    make(chan []byte, 1),
 		}
 		s.OnMessage = func(b []byte) error {
+			s.C <- []byte("response")
 			return nil
 		}
-		go s.Push(closeCtx)
-		s.Pull(closeCtx)
+		go func() {
+			if err := s.Push(); err != nil {
+				panic(err)
+			}
+		}()
+		if err := s.Pull(); err != nil {
+			panic(err)
+		}
 	}))
 	go func() {
 		http.ListenAndServe(":8889", nil)
