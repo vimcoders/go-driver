@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/vimcoders/go-driver/log"
 	"golang.org/x/net/websocket"
 )
 
@@ -19,13 +18,9 @@ func init_tcp() {
 		panic(err)
 	}
 	go func() {
-		if e := recover(); e != nil {
-			log.Error("accept err %v", e)
-		}
 		for {
 			c, err := l.Accept()
 			if err != nil {
-				log.Error("Accept err %v", err)
 				continue
 			}
 			closeCtx, closeFunc := context.WithCancel(context.Background())
@@ -58,11 +53,6 @@ func init_websocket() {
 		s.Pull(closeCtx)
 	}))
 	go func() {
-		if e := recover(); e != nil {
-			log.Error("accept rr %v", e)
-		}
-		if err := http.ListenAndServe(":8889", nil); err != nil {
-			log.Error("listent %v", err)
-		}
+		http.ListenAndServe(":8889", nil)
 	}()
 }

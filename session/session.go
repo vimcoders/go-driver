@@ -5,8 +5,6 @@ import (
 	"errors"
 	"net"
 	"time"
-
-	"github.com/vimcoders/go-driver/log"
 )
 
 type Session struct {
@@ -36,14 +34,6 @@ func (s *Session) Delete(key interface{}) error {
 }
 
 func (s *Session) Push(ctx context.Context) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			log.Error("Handle recover %v", e)
-		}
-		if err != nil {
-			log.Error("Handle %v", err)
-		}
-	}()
 	defer s.Close()
 	buffer := make([]byte, 512)
 	for {
@@ -70,15 +60,6 @@ func (s *Session) Push(ctx context.Context) (err error) {
 }
 
 func (s *Session) Pull(ctx context.Context) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			log.Error("Handle recover %v", e)
-		}
-
-		if err != nil {
-			log.Error("Handle %v", err)
-		}
-	}()
 	defer s.Close()
 	buffer := make([]byte, 512)
 	length := 0
