@@ -6,17 +6,17 @@ import (
 	"time"
 )
 
-type Session struct {
+type Conn struct {
 	net.Conn
 	OnMessage func(b []byte) error
 	C         chan []byte
 }
 
-func (s *Session) Push() (err error) {
+func (c *Conn) Push() (err error) {
 	buffer := make([]byte, 512)
 	for {
 		select {
-		case b, ok := <-s.C:
+		case b, ok := <-c.C:
 			if !ok {
 				return errors.New("close")
 			}
@@ -24,10 +24,10 @@ func (s *Session) Push() (err error) {
 			buffer[0] = uint8(length >> 8)
 			buffer[1] = uint8(length)
 			copy(buffer[2:], b)
-			if err = s.SetWriteDeadline(Timeout()); err != nil {
+			if err = c.SetWriteDeadline(Timeout()); err != nil {
 				return err
 			}
-			if _, err = s.Conn.Write(buffer[:length]); err != nil {
+			if _, err = c.Write(buffer[:length]); err != nil {
 				return err
 			}
 		}
@@ -36,14 +36,14 @@ func (s *Session) Push() (err error) {
 	return nil
 }
 
-func (s *Session) Pull() (err error) {
+func (c *Conn) Pull() (err error) {
 	buffer := make([]byte, 512)
 	length := 0
 	for {
-		if err = s.SetReadDeadline(Timeout()); err != nil {
+		if err = c.SetReadDeadline(Timeout()); err != nil {
 			return err
 		}
-		n, err := s.Read(buffer[length:])
+		n, err := c.Read(buffer[length:])
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func (s *Session) Pull() (err error) {
 		if length < header {
 			continue
 		}
-		if err := s.OnMessage(buffer[2:header]); err != nil {
+		if err := c.OnMessage(buffer[2:header]); err != nil {
 			return err
 		}
 		copy(buffer, buffer[header:])
@@ -65,12 +65,11 @@ func (s *Session) Pull() (err error) {
 	return nil
 }
 
-func (s *Session) Close() (err error) {
-	if err = s.Conn.Close(); err != nil {
+func (c *Conn) Close() (err error) {
+	if err = c.Conn.Close(); err != nil {
 		return err
 	}
-	close(s.C)
-
+	close(c.C)
 	return nil
 }
 
