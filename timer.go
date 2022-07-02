@@ -40,9 +40,6 @@ func (pq *PriorityQueue) Push(x any) {
 func (pq *PriorityQueue) Pop() any {
 	old := *pq
 	n := len(old)
-	if n <= 0 {
-		return nil
-	}
 	item := old[n-1]
 	item.index = -1 // for safety
 	*pq = old[0 : n-1]
@@ -70,7 +67,7 @@ func NewWheelTimer(twNumber int) *WheelTimer {
 	return tw
 }
 
-func (t *WheelTimer) AddTimer(p *Priority) {
+func (t *WheelTimer) Push(p *Priority) {
 	t.Lock()
 	defer t.Unlock()
 	h := t.wheel[p.Priority%len(t.wheel)]
@@ -87,9 +84,6 @@ func (t *WheelTimer) Tick() {
 			break
 		}
 		p := heap.Pop(h)
-		if p == nil {
-			break
-		}
 		if priority, ok := p.(*Priority); ok {
 			priority.Callback(priority.Priority)
 		}
