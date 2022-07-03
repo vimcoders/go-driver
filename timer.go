@@ -2,7 +2,7 @@ package driver
 
 import (
 	"container/heap"
-	"sync"
+	"fmt"
 	"time"
 )
 
@@ -42,15 +42,17 @@ func (pq *PriorityQueue) Pop() any {
 	n := len(old)
 	item := old[n-1]
 	item.index = -1 // for safety
+	if item.Priority > int(time.Now().Unix()) {
+		return nil
+	}
 	*pq = old[0 : n-1]
 	return item
 }
 
 type WheelTimer struct {
-	Id    int64
 	Unix  int64 // 时间轮的当前时间
 	wheel []heap.Interface
-	sync.RWMutex
+	ch    chan struct{ del, add *Priority }
 }
 
 func NewWheelTimer(twNumber int) *WheelTimer {
@@ -60,6 +62,7 @@ func NewWheelTimer(twNumber int) *WheelTimer {
 	tw := &WheelTimer{
 		wheel: make([]heap.Interface, twNumber),
 		Unix:  time.Now().Unix(),
+		ch:    make(chan struct{ del, add *Priority }, 1),
 	}
 	for i := 0; i < len(tw.wheel); i++ {
 		tw.wheel[i] = &PriorityQueue{}
@@ -67,16 +70,34 @@ func NewWheelTimer(twNumber int) *WheelTimer {
 	return tw
 }
 
-func (t *WheelTimer) Push(p *Priority) {
-	t.Lock()
-	defer t.Unlock()
-	h := t.wheel[p.Priority%len(t.wheel)]
-	heap.Push(h, p)
+func (t *WheelTimer) Push(p *Priority) (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	t.ch <- struct{ del, add *Priority }{add: p}
+}
+
+func (t *WheelTimer) Remove(p *Priority) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	t.ch <- struct{ del, add *Priority }{del: p}
+}
+
+func (tw *WheelTimer) Close() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	close(tw.ch)
 }
 
 func (t *WheelTimer) Tick() {
-	t.RLock()
-	defer t.RUnlock()
 	t.Unix++
 	h := t.wheel[t.Unix%int64(len(t.wheel))]
 	for {
@@ -84,16 +105,40 @@ func (t *WheelTimer) Tick() {
 			break
 		}
 		p := heap.Pop(h)
-		if priority, ok := p.(*Priority); ok {
-			priority.Callback(priority.Priority)
+		if p == nil {
+			break
 		}
+		priority, ok := p.(*Priority)
+		if !ok {
+			break
+		}
+		if priority.Callback == nil {
+			continue
+		}
+		priority.Callback(priority.Priority)
 	}
 }
 
 func (tw *WheelTimer) Run() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	for range ticker.C {
-		tw.Tick()
+	for {
+		select {
+		case <-ticker.C:
+			tw.Tick()
+		case t := <-tw.ch:
+			addTimer, delTimer := t.add, t.del
+			if addTimer == nil && delTimer == nil {
+				return
+			}
+			if addTimer != nil {
+				h := tw.wheel[addTimer.Priority%len(tw.wheel)]
+				heap.Push(h, addTimer)
+			}
+			if delTimer != nil {
+				h := tw.wheel[delTimer.Priority%len(tw.wheel)]
+				heap.Remove(h, delTimer.index)
+			}
+		}
 	}
 }
