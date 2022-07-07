@@ -10,7 +10,6 @@ import (
 type Priority struct {
 	index    int // The index of the item in the heap.
 	Priority int // The priority of the item in the queue.
-	// The index is needed by update and is maintained by the heap.Interface methods.
 	Callback func(priority int)
 }
 
@@ -77,6 +76,7 @@ func (t *WheelTimer) Push(p *Priority) (err error) {
 		}
 	}()
 	t.ch <- struct{ del, add *Priority }{add: p}
+	return nil
 }
 
 func (t *WheelTimer) Remove(p *Priority) {
