@@ -57,11 +57,11 @@ func (c *Quic) Pull() (err error) {
 	}
 	b := make([]byte, 512)
 	for {
-		nr, err := r.Read(b)
+		n, err := r.Read(b)
 		if err != nil {
 			return err
 		}
-		if nr <= 0 {
+		if n <= 0 {
 			continue
 		}
 		if err := c.OnMessage(b); err != nil {

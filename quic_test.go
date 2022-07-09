@@ -38,7 +38,7 @@ func TestQuic(t *testing.T) {
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"quic-echo-example"},
 	}
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 10000; i++ {
 		waitGroup.Add(1)
 		c, err := quic.DialAddr("localhost:9999", tlsConf, nil)
 		if err != nil {
