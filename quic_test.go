@@ -26,12 +26,7 @@ func init_quic() {
 			if err != nil {
 				panic(err)
 			}
-			quic := &Quic{
-				Connection: c,
-				C:          make(chan []byte, 1),
-			}
-			go quic.Pull()
-			go quic.Push()
+			NewQuic(c)
 		}
 	}()
 }
@@ -49,12 +44,7 @@ func TestQuic(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		quic := &Quic{
-			Connection: c,
-			C:          make(chan []byte, 1),
-		}
-		go quic.Pull()
-		go quic.Push()
+		quic := NewQuic(c)
 		go func() {
 			ticker := time.NewTicker(time.Second)
 			for range ticker.C {
