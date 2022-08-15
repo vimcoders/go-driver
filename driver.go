@@ -23,19 +23,19 @@ type Table interface {
 }
 
 type Updater interface {
-	Update(i interface{}) (interface{}, error)
+	Update(ctx context.Context, i interface{}) (interface{}, error)
 }
 
 type Deleter interface {
-	Delete(i interface{}) (interface{}, error)
+	Delete(ctx context.Context, i interface{}) (interface{}, error)
 }
 
 type Inserter interface {
-	Insert(i interface{}) (interface{}, error)
+	Insert(ctx context.Context, i interface{}) (interface{}, error)
 }
 
 type Queryer interface {
-	Query(i interface{}) ([]interface{}, error)
+	Query(ctx context.Context, i interface{}) ([]interface{}, error)
 }
 
 type Tx interface {
@@ -43,6 +43,6 @@ type Tx interface {
 	Deleter
 	Inserter
 	Queryer
-	Commit() error
-	Rollback() error
+	Commit(ctx context.Context) error
+	Rollback(ctx context.Context) error
 }
