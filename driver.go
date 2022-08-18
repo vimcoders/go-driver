@@ -14,6 +14,7 @@ type Logger interface {
 
 type Connector interface {
 	Tx(ctx context.Context) (Tx, error)
+	Execer(ctx context.Context) (Execer, error)
 	SetMaxOpenConns(n int)
 	Close() error
 }
