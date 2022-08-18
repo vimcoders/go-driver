@@ -39,10 +39,14 @@ type Queryer interface {
 }
 
 type Tx interface {
+	Execer
+	Commit(ctx context.Context) error
+	Rollback(ctx context.Context) error
+}
+
+type Execer interface {
 	Updater
 	Deleter
 	Inserter
 	Queryer
-	Commit(ctx context.Context) error
-	Rollback(ctx context.Context) error
 }
