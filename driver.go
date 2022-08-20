@@ -2,6 +2,7 @@ package driver
 
 import (
 	"context"
+	"io"
 )
 
 type Logger interface {
@@ -16,7 +17,7 @@ type Connector interface {
 	Tx(ctx context.Context) (Tx, error)
 	Execer(ctx context.Context) (Execer, error)
 	SetMaxOpenConns(n int)
-	Close() error
+	io.Closer
 }
 
 type Table interface {
@@ -41,8 +42,7 @@ type Queryer interface {
 
 type Tx interface {
 	Execer
-	Commit(ctx context.Context) error
-	Rollback(ctx context.Context) error
+	io.Closer
 }
 
 type Execer interface {
@@ -50,4 +50,5 @@ type Execer interface {
 	Deleter
 	Inserter
 	Queryer
+	io.Closer
 }
