@@ -42,7 +42,7 @@ type Queryer interface {
 
 type Tx interface {
 	Execer
-	io.Closer
+	Close(ctx context.Context) error
 }
 
 type Execer interface {
@@ -50,5 +50,5 @@ type Execer interface {
 	Deleter
 	Inserter
 	Queryer
-	io.Closer
+	Close(ctx context.Context) error
 }
