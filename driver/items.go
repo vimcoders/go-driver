@@ -9,26 +9,6 @@ package driver
 // 	"strings"
 // )
 
-// const (
-// 	ITEM_EXP                   = -8
-// 	ITEM_GOLD                  = -7    // 金币
-// 	ITEM_DIAMOND               = -6    // 钻石
-// 	ITEM_CROWN                 = -3    // 皇冠
-// 	ITEM_TROPHIES              = -4    // 奖杯
-// 	ITEM_SPORTS_TICKET         = -2    // 竞技场门票
-// 	ITEM_SPORTS_MASTER_TICKET  = -15   // 竞技场大师门票
-// 	ITEM_SPORTS_ADVANCE_TICKET = -14   // 竞技场高级门票
-// 	ITEM_SPORTS_MIDDLE_TICKET  = -13   // 竞技场中级门票
-// 	ITEM_CASUAL_TICKET         = -10   // 休闲场门票
-// 	ITEM_SPORTS_WEEKLY_POINT   = -12   // 周竞技积分
-// 	ITEM_SPORTS_MONTHLY_POINT  = -11   // 月竞技积分
-// 	ITEM_DAILY_POINT           = 31000 // 日常活跃点
-// 	ITEM_WEEK_POINT            = 31001 // 周常活跃点
-// 	ITEM_ACHIEVEMENT_POINT     = 31002 // 成就活跃点
-// 	ITEM_COLLECT_THIRD_NINE    = 60003 // 集九：第3个九
-// 	ITEM_COLLECT_FIFTH_NINE    = 60005 // 集九：第5个九
-// )
-
 // type Item struct {
 // 	Id    int32 `json:"id"`
 // 	Count int32 `json:"count"`
