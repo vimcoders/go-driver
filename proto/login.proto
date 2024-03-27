@@ -1,0 +1,13 @@
+syntax = "proto3";
+package pb;
+option go_package = "./pb";
+
+// 登录 请求
+message LoginRequest {
+  string Token = 1;//令牌
+}
+
+// 登录 返回
+message LoginResponse {
+  int32 Code = 1;//错误码
+}
