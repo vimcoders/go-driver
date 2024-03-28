@@ -32,10 +32,10 @@ func MakeHandler() *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	connect := &rpcx.Connect{Conn: conn, Timeout: time.Second * 30}
-	connect.OnMessage = func(request *rpcx.Request) (*rpcx.Response, error) {
+	connect.OnMessage = func(w rpcx.ResponseWriter, request *rpcx.Request) {
 		total++
 		log.Info(total)
-		return &rpcx.Response{Message: request.Message}, nil
+		w.Write(request.Message)
 	}
 	go connect.Read(ctx)
 }

@@ -27,7 +27,7 @@ const (
 
 type Connect struct {
 	net.Conn
-	OnMessage func(request *Request) (*Response, error)
+	OnMessage func(w ResponseWriter, request *Request)
 	Closed    func()
 	Timeout   time.Duration
 }
@@ -73,12 +73,10 @@ func (x *Connect) Read(ctx context.Context) (err error) {
 		if _, err := buffer.Discard(len(bodyBytes)); err != nil {
 			return err
 		}
-		response, err := x.OnMessage(&Request{RequestId: request.RequestId, Message: request.Message})
-		if err != nil {
-			log.Error(err.Error())
-		}
+		var response Response
+		x.OnMessage(&response, &Request{RequestId: request.RequestId, Message: request.Message})
 		response.RequestId = request.RequestId
-		x.Push(context.Background(), response)
+		x.Push(context.Background(), &response)
 	}
 }
 
