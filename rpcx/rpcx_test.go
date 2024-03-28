@@ -8,16 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vimcoders/go-driver/rpcx"
-
-	"github.com/vimcoders/go-driver/pb"
-
-	"github.com/vimcoders/go-driver/message"
-
-	"github.com/vimcoders/go-driver/log"
-
 	"github.com/vimcoders/go-driver/driver"
-
+	"github.com/vimcoders/go-driver/log"
+	"github.com/vimcoders/go-driver/message"
+	"github.com/vimcoders/go-driver/pb"
+	"github.com/vimcoders/go-driver/rpcx"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,17 +25,17 @@ type Handler struct {
 
 // MakeHandler creates a Handler instance
 func MakeHandler() *Handler {
-	encoder := message.NewProtobuf(message.GateMessages...)
+	encoder := message.NewProtobuf(message.Messages...)
 	return &Handler{Marshaler: encoder, Unmarshaler: encoder}
 }
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	connect := &rpcx.Connect{Conn: conn, Marshaler: x.Marshaler, Unmarshaler: x.Unmarshaler, Timeout: time.Second * 30}
-	connect.OnMessage = func(request proto.Message) (proto.Message, error) {
+	connect := &rpcx.Connect{Conn: conn, Timeout: time.Second * 30}
+	connect.OnMessage = func(request *rpcx.Request) (*rpcx.Response, error) {
 		total++
 		log.Info(total)
-		return request, nil
+		return &rpcx.Response{Message: request.Message}, nil
 	}
 	go connect.Read(ctx)
 }
@@ -65,43 +60,21 @@ func TestListen(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
-	client := rpcx.NewClient(conn, message.GateMessages)
+	client := rpcx.NewClient(conn, message.Messages)
 	go func() {
+		b, err := proto.Marshal(&pb.LoginRequest{Token: "login"})
+		if err != nil {
+			log.Error(err.Error())
+		}
 		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
+			client.Call(context.Background(), &rpcx.Request{Message: b})
 		}
 	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
-	go func() {
-		for i := 0; i < math.MaxInt64; i++ {
-			client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
-		}
-	}()
+	b, err := proto.Marshal(&pb.LoginRequest{Token: "login"})
+	if err != nil {
+		log.Error(err.Error())
+	}
 	for i := 0; i < math.MaxInt64; i++ {
-		client.Call(context.Background(), 100, &pb.LoginRequest{Token: "token"})
+		client.Call(context.Background(), &rpcx.Request{Message: b})
 	}
 }

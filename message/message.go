@@ -8,8 +8,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/vimcoders/go-driver/pb"
 	"google.golang.org/protobuf/proto"
 )
+
+var Messages = []proto.Message{
+	&pb.LoginRequest{},
+	&pb.LoginResponse{},
+}
 
 type Protobuf struct {
 	Messages []proto.Message

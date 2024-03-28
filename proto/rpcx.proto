@@ -7,3 +7,13 @@ message Message {
   bytes Body = 2;
   string RequestId = 3;
 }
+
+message Request {
+  string RequestId = 1;
+  bytes Message = 2;
+}
+
+message Response {
+  string RequestId = 1;
+  bytes Message = 2;
+}

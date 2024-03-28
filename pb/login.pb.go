@@ -26,7 +26,7 @@ type LoginRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Token string `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"` //proxy返回的令牌
+	Token string `protobuf:"bytes,1,opt,name=Token,proto3" json:"Token,omitempty"` //令牌
 }
 
 func (x *LoginRequest) Reset() {

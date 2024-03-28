@@ -11,15 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vimcoders/go-driver/pb"
-
-	"github.com/vimcoders/go-driver/message"
-
-	"github.com/vimcoders/go-driver/log"
-
-	"github.com/vimcoders/go-driver/driver"
-
 	"github.com/google/uuid"
+	"github.com/vimcoders/go-driver/driver"
+	"github.com/vimcoders/go-driver/log"
+	"github.com/vimcoders/go-driver/pb"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -32,11 +27,9 @@ const (
 
 type Connect struct {
 	net.Conn
-	OnMessage func(request proto.Message) (proto.Message, error)
-	driver.Unmarshaler
-	driver.Marshaler
-	Closed  func()
-	Timeout time.Duration
+	OnMessage func(request *Request) (*Response, error)
+	Closed    func()
+	Timeout   time.Duration
 }
 
 func (x *Connect) Read(ctx context.Context) (err error) {
@@ -73,46 +66,35 @@ func (x *Connect) Read(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		var message pb.Message
-		if err := proto.Unmarshal(bodyBytes[Header:], &message); err != nil {
+		var request pb.Request
+		if err := proto.Unmarshal(bodyBytes[Header:], &request); err != nil {
 			return err
 		}
 		if _, err := buffer.Discard(len(bodyBytes)); err != nil {
 			return err
 		}
-		request, err := x.Unmarshal(message.Body)
-		if err != nil {
-			return err
-		}
-		response, err := x.OnMessage(request)
+		response, err := x.OnMessage(&Request{RequestId: request.RequestId, Message: request.Message})
 		if err != nil {
 			log.Error(err.Error())
 		}
-		x.Push(context.Background(), message.RequestId, response)
+		response.RequestId = request.RequestId
+		x.Push(context.Background(), response)
 	}
 }
 
-func (x *Connect) Push(ctx context.Context, requstId string, push proto.Message) (err error) {
-	b, err := x.Marshal(push)
-	if err != nil {
-		return err
-	}
-	message := &pb.Message{
-		Body:      b,
-		RequestId: requstId,
-	}
-	response, err := proto.Marshal(message)
+func (x *Connect) Push(ctx context.Context, response *Response) (err error) {
+	iResponse, err := proto.Marshal(response.ToMessage())
 	if err != nil {
 		return err
 	}
 	if err := x.SetWriteDeadline(time.Now().Add(time.Second * 120)); err != nil {
 		return err
 	}
-	buffer := make(driver.Buffer, 0, len(response)+4)
-	if err := binary.Write(&buffer, binary.BigEndian, uint32(len(response))); err != nil {
+	buffer := make(driver.Buffer, 0, len(iResponse)+4)
+	if err := binary.Write(&buffer, binary.BigEndian, uint32(len(iResponse))); err != nil {
 		return err
 	}
-	buffer.Write(response)
+	buffer.Write(iResponse)
 	if _, err := x.Conn.Write(buffer); err != nil {
 		return err
 	}
@@ -122,11 +104,8 @@ func (x *Connect) Push(ctx context.Context, requstId string, push proto.Message)
 type Client struct {
 	net.Conn
 	sync.RWMutex
-	pending   map[string]chan proto.Message
-	OnMessage func(request *pb.Message) (proto.Message, error)
-	OnPush    func(push proto.Message)
-	driver.Unmarshaler
-	driver.Marshaler
+	pending map[string]chan *Response
+	OnPush  func(push proto.Message)
 	Closed  func()
 	Timeout time.Duration
 }
@@ -165,11 +144,15 @@ func (x *Client) Read(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		var message pb.Message
-		if err := proto.Unmarshal(bodyBytes[Header:], &message); err != nil {
+		var response pb.Response
+		if err := proto.Unmarshal(bodyBytes[Header:], &response); err != nil {
 			return err
 		}
-		x.OnMessage(&message)
+		ch := x.done(response.RequestId)
+		if ch == nil {
+			continue
+		}
+		ch <- &Response{RequestId: response.RequestId, Message: response.Message}
 		if _, err := buffer.Discard(len(bodyBytes)); err != nil {
 			return err
 		}
@@ -177,25 +160,10 @@ func (x *Client) Read(ctx context.Context) (err error) {
 }
 
 func NewClient(c net.Conn, messages []proto.Message) *Client {
-	encoder := message.NewProtobuf(messages...)
 	client := &Client{
-		Conn:        c,
-		pending:     make(map[string]chan proto.Message, 100),
-		Unmarshaler: encoder,
-		Marshaler:   encoder,
-		Timeout:     time.Second * 30,
-	}
-	client.OnMessage = func(request *pb.Message) (proto.Message, error) {
-		ch := client.done(request.RequestId)
-		if ch == nil {
-			return nil, nil
-		}
-		response, err := client.Unmarshal(request.Body)
-		if err != nil {
-			return nil, err
-		}
-		ch <- response
-		return nil, nil
+		Conn:    c,
+		pending: make(map[string]chan *Response),
+		Timeout: time.Second * 30,
 	}
 	go client.Ping(context.Background())
 	go client.Read(context.Background())
@@ -215,35 +183,36 @@ func (x *Client) Ping(ctx context.Context) (err error) {
 	}()
 	ticker := time.NewTicker(time.Second * 60)
 	for range ticker.C {
-		x.Call(context.Background(), 0, &pb.LoginRequest{Token: "ping"})
+		b, err := proto.Marshal(&pb.LoginRequest{Token: "ping"})
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		x.Call(context.Background(), &Request{Message: b})
 	}
 	return nil
 }
 
-func (x *Client) Call(ctx context.Context, id int64, args proto.Message) (reply proto.Message, err error) {
+func (x *Client) Call(ctx context.Context, request *Request) (reply *Response, err error) {
 	defer func() {
 		if err != nil {
-			log.Error(err.Error(), args)
+			log.Error(err.Error(), request)
 		}
 	}()
-	b, err := x.Marshal(args)
+	request.RequestId = uuid.NewString()
+	b, err := proto.Marshal(request.ToMessage())
 	if err != nil {
 		return nil, err
 	}
-	requestId := uuid.NewString()
-	done := x.newPending(requestId)
-	request, err := proto.Marshal(&pb.Message{Id: id, Body: b, RequestId: requestId})
-	if err != nil {
-		return nil, err
-	}
+	done := x.newPending(request.RequestId)
 	if err := x.SetWriteDeadline(time.Now().Add(time.Second * 120)); err != nil {
 		return nil, err
 	}
-	buffer := make(driver.Buffer, 0, len(request)+4)
-	if err := binary.Write(&buffer, binary.BigEndian, uint32(len(request))); err != nil {
+	buffer := make(driver.Buffer, 0, len(b)+4)
+	if err := binary.Write(&buffer, binary.BigEndian, uint32(len(b))); err != nil {
 		return nil, err
 	}
-	buffer.Write(request)
+	buffer.Write(b)
 	if _, err := x.Conn.Write(buffer); err != nil {
 		return nil, err
 	}
@@ -256,18 +225,18 @@ func (x *Client) Call(ctx context.Context, id int64, args proto.Message) (reply 
 	}
 }
 
-func (x *Client) newPending(id string) chan proto.Message {
+func (x *Client) newPending(id string) chan *Response {
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[id]; ok {
 		return v
 	}
-	done := make(chan proto.Message, 1)
+	done := make(chan *Response, 1)
 	x.pending[id] = done
 	return done
 }
 
-func (x *Client) done(id string) chan proto.Message {
+func (x *Client) done(id string) chan *Response {
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[id]; ok {
