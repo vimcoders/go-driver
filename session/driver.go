@@ -55,6 +55,10 @@ func (x Request) Message() []byte {
 	return x[6:]
 }
 
+func (x Request) Reply() uint16 {
+	return x.Kind() + 1
+}
+
 type Response []byte
 
 func NewResponse(kind uint16, message proto.Message) (Response, error) {

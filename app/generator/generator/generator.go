@@ -32,8 +32,8 @@ type Header struct {
 }
 
 const (
-	TitleRow   = 1
-	CommentRow = 4
+	TitleRow   = 0
+	CommentRow = 2
 )
 
 func (s *Sheet) GetTitle() []*Header {
@@ -76,7 +76,7 @@ func (s *Sheet) GetTitle() []*Header {
 
 func (s *Sheet) marshal(r *xlsx.Row) map[string]interface{} {
 	result := make(map[string]interface{})
-	typeRow, err := s.Row(2)
+	typeRow, err := s.Row(TitleRow)
 	if err != nil {
 		panic(err)
 	}
@@ -100,7 +100,7 @@ func (s *Sheet) marshal(r *xlsx.Row) map[string]interface{} {
 
 func (s *Sheet) MarshalTo(w io.Writer) error {
 	var result []map[string]interface{}
-	for i := 5; i < s.MaxRow; i++ {
+	for i := CommentRow + 1; i < s.MaxRow; i++ {
 		row, err := s.Row(i)
 		if err != nil {
 			return err

@@ -72,7 +72,7 @@ func (x *Session) Handle(w driver.ResponsePusher, req Request) error {
 	if err != nil {
 		return err
 	}
-	reply, err := x.Unmarshal.Unmarshal(NewRequest(req.Kind() + 1))
+	reply, err := x.Unmarshal.Unmarshal(NewRequest(req.Reply()))
 	if err != nil {
 		return err
 	}
