@@ -15,8 +15,8 @@ type Session struct {
 	driver.Marshal
 	driver.Unmarshal
 	*driver.Session
-	iClient *rpcx.Client
-	Token   string
+	rpc   *rpcx.Client
+	Token string
 }
 
 func (x *Session) Handle(ctx context.Context, req driver.Request) error {
@@ -29,7 +29,7 @@ func (x *Session) Handle(ctx context.Context, req driver.Request) error {
 		return err
 	}
 	if len(x.Token) > 0 {
-		if err := x.iClient.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
+		if err := x.rpc.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
 			return err
 		}
 		if err := x.Push(ctx, reply); err != nil {
@@ -41,7 +41,7 @@ func (x *Session) Handle(ctx context.Context, req driver.Request) error {
 	if !ok {
 		return errors.New("!ok")
 	}
-	if err := x.iClient.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: loginRequest.Token}); err != nil {
+	if err := x.rpc.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: loginRequest.Token}); err != nil {
 		return err
 	}
 	loginResponse, ok := reply.(*pb.LoginResponse)

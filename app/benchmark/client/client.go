@@ -87,6 +87,7 @@ func (x *Client) Login() error {
 		return err
 	}
 	x.Conn = conn
+	x.Handler = x
 	go x.Poll(context.Background())
 	go x.Keeplive(context.Background())
 	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
@@ -100,7 +101,7 @@ func (x *Client) LoginResponse(response *pb.LoginResponse) {
 
 }
 
-func (x *Client) Handle(w io.Writer, request []byte) {
+func (x *Client) Handle(ctx context.Context, request session.Request) error {
 	// message, _, err := x.Unmarshal.Unmarshal(request)
 	// if err != nil {
 	// 	log.Error(err.Error())
@@ -108,6 +109,7 @@ func (x *Client) Handle(w io.Writer, request []byte) {
 	// }
 	// method := reflect.ValueOf(x).MethodByName(string(proto.MessageName(message).Name()))
 	// method.Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.ValueOf(message)})
+	return nil
 }
 
 func (x *Client) Keeplive(ctx context.Context) error {

@@ -22,7 +22,8 @@ var handler = &Handler{}
 type Handler struct {
 	driver.Marshal
 	driver.Unmarshal
-	iClient *rpcx.Client
+	rpc *rpcx.Client
+	*etcd.Client
 	*conf.Conf
 }
 
@@ -35,10 +36,21 @@ func MakeHandler(opt conf.Conf) *Handler {
 	if err != nil {
 		panic(err.Error())
 	}
-	key := opt.Etcd.Version + "/service/logic"
-	response, err := etcdx.WithQuery[etcdx.Service](cli).Query(key)
-	if err != nil {
+	handler.Conf = &opt
+	handler.Client = cli
+	handler.Marshal = driver.Messages
+	handler.Unmarshal = driver.Messages
+	if err := handler.DialLogic(); err != nil {
 		panic(err.Error())
+	}
+	return handler
+}
+
+func (x *Handler) DialLogic() error {
+	key := x.Etcd.Version + "/service/logic"
+	response, err := etcdx.WithQuery[etcdx.Service](x.Client).Query(key)
+	if err != nil {
+		return err
 	}
 	for i := 0; i < len(response); i++ {
 		log.Info(response[i].Addr)
@@ -51,20 +63,20 @@ func MakeHandler(opt conf.Conf) *Handler {
 		})
 		//conn, err := net.Dial("tcp", response[i].Addr)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		log.Info(conn.RemoteAddr().String())
-		handler.iClient = rpcx.NewClient(conn)
+		handler.rpc = rpcx.NewClient(conn)
 	}
-	handler.Marshal = driver.Messages
-	handler.Unmarshal = driver.Messages
-	return handler
+	return nil
 }
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	newSession := &Session{
-		iClient: x.iClient,
+		rpc:       x.rpc,
+		Marshal:   x.Marshal,
+		Unmarshal: x.Unmarshal,
 		Session: &driver.Session{
 			Timeout:  time.Minute * 2,
 			Buffsize: 512,
@@ -77,7 +89,7 @@ func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 
 func (x *Handler) LoginRequest() {
 	var replay pb.LoginResponse
-	if err := x.iClient.Call(context.Background(), &pb.LoginRequest{}, &replay); err != nil {
+	if err := x.rpc.Call(context.Background(), &pb.LoginRequest{}, &replay); err != nil {
 		log.Error(err.Error())
 	}
 }
