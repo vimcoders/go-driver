@@ -1,0 +1,23 @@
+syntax = "proto3";
+package pb;
+option go_package = "../pb";
+
+message Option {
+	string Key = 1;
+	string Value = 2;
+}
+
+message Message {
+	bytes Message = 1;
+	repeated Option Option = 2;
+}
+
+message PingRequest {
+	bytes Message = 1;
+}
+
+message PingResponse {
+	bytes Message = 1;
+}
+
+// protoc --go_out=. --go-grpc_out=. *.proto

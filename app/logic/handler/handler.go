@@ -1,0 +1,115 @@
+package handler
+
+import (
+	"context"
+	"errors"
+	"net"
+	"reflect"
+	"runtime/debug"
+	"sync"
+	"time"
+
+	"go-driver/app/logic/driver"
+	"go-driver/conf"
+	"go-driver/log"
+	"go-driver/mongox"
+	"go-driver/pb"
+	"go-driver/rpcx"
+
+	etcd "go.etcd.io/etcd/client/v3"
+	"google.golang.org/protobuf/proto"
+)
+
+var handler = &Handler{}
+
+type Handler struct {
+	*mongox.Mongo
+	*etcd.Client
+	sync.RWMutex
+	Users []*driver.User
+	Opt   *conf.Conf
+}
+
+// MakeHandler creates a Handler instance
+func MakeHandler(opt *conf.Conf) *Handler {
+	log.Info("etcd endpoints:", opt.Etcd.Endpoints)
+	cli, err := etcd.New(etcd.Config{
+		Endpoints:   []string{opt.Etcd.Endpoints},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	log.Info(opt.Mongo.Host, opt.Mongo.DB)
+	mongo, err := mongox.Connect(opt.Mongo.Host, opt.Mongo.DB)
+	if err != nil {
+		panic(err)
+	}
+	handler.Mongo = mongo
+	handler.Client = cli
+	handler.Opt = opt
+	return handler
+}
+
+// Handle receives and executes redis commands
+func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
+	log.Infof("new conn %s", conn.RemoteAddr().String())
+	server := &rpcx.Server{Conn: conn}
+	server.Register(x)
+}
+
+func (x *Handler) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+	x.Lock()
+	defer x.Unlock()
+	// x.total++
+	// log.Debugf("%v", x.total)
+	return &pb.PingResponse{}, nil
+}
+
+// Close stops handler
+func (x *Handler) Close() error {
+	for i := 0; i < len(x.Users); i++ {
+		// x.Mongo.Insert(x.Users[i])
+		// x.Mongo.Update(x.Users[i])
+	}
+	return nil
+}
+
+func (x *Handler) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Option) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Error(e)
+			debug.PrintStack()
+		}
+		if err != nil {
+			log.Error(err.Error())
+			debug.PrintStack()
+		}
+		x.Close()
+	}()
+	method := reflect.ValueOf(x).MethodByName(opt.Get(rpcx.MESSAGENAME))
+	t := method.Type()
+	if t.NumIn() < 2 {
+		return errors.New("t.NumIn() < 2")
+	}
+	e := t.In(1).Elem()
+	in, ok := reflect.New(e).Interface().(proto.Message)
+	if !ok {
+		return errors.New("!ok")
+	}
+	if err := proto.Unmarshal(request, in); err != nil {
+		return err
+	}
+	ctx := x.Authentication(opt)
+	if ctx == nil {
+		return errors.New("ctx == nil")
+	}
+	values := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(in)})
+	if len(values) <= 0 {
+		return errors.New("len(values) <= 0")
+	}
+	if _, err := w.Push(context.Background(), values[0].Interface().(proto.Message)); err != nil {
+		return err
+	}
+	return nil
+}

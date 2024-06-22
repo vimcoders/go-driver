@@ -1,0 +1,34 @@
+package handler
+
+import (
+	"go-driver/driver"
+	"go-driver/log"
+	"go-driver/mongox"
+
+	"go.mongodb.org/mongo-driver/bson"
+)
+
+func (x *Handler) GetUser(userId int64) *driver.User {
+	x.Lock()
+	defer x.Unlock()
+	for i := 0; i < len(x.Users); i++ {
+		if x.Users[i].UserId == userId {
+			return x.Users[i]
+		}
+	}
+	filter := bson.M{
+		"user_id": userId,
+	}
+	users, err := mongox.WithQuery[*driver.User](x.Mongo.Database).Query(filter)
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+	x.Users = append(x.Users, users...)
+	for i := 0; i < len(users); i++ {
+		if users[i].UserId == userId {
+			return users[i]
+		}
+	}
+	return nil
+}
