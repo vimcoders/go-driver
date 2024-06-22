@@ -17,13 +17,13 @@ func main() {
 	var count int64
 	for i := 0; i < 1*4; i++ {
 		client := benchmark.Client{
-			Url:      "http://127.0.0.1:9800/api/v1/passport/login",
-			CometUrl: "127.0.0.1:9600",
+			Url:       "http://127.0.0.1:9800/api/v1/passport/login",
+			CometUrl:  "127.0.0.1:9600",
+			Marshal:   session.Messages,
+			Unmarshal: session.Messages,
 			Session: &session.Session{
-				Marshal:   session.Messages,
-				Unmarshal: session.Messages,
-				Timeout:   time.Minute * 2,
-				Buffsize:  512,
+				Timeout:  time.Minute * 2,
+				Buffsize: 512,
 			},
 		}
 		if err := client.Login(); err != nil {

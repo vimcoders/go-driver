@@ -14,6 +14,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type ResponseWriter[T any] struct {
@@ -27,6 +29,9 @@ type Client struct {
 	Url      string
 	CometUrl string
 	*session.Session
+	driver.Marshal
+	driver.Unmarshal
+	Token string
 }
 
 func (x *Client) Register() error {
@@ -84,7 +89,7 @@ func (x *Client) Login() error {
 	x.Conn = conn
 	go x.Poll(context.Background())
 	go x.Keeplive(context.Background())
-	if _, err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
+	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
 		log.Error(err.Error())
 		return err
 	}
@@ -122,7 +127,18 @@ func (x *Client) Ping(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	if _, err := x.Push(ctx, &pb.PingRequest{}); err != nil {
+	if err := x.Push(ctx, &pb.PingRequest{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (x *Client) Push(ctx context.Context, message proto.Message) error {
+	response, err := x.Marshal.Marshal(message)
+	if err != nil {
+		return err
+	}
+	if _, err := x.Write(response); err != nil {
 		return err
 	}
 	return nil

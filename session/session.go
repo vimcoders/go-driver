@@ -4,21 +4,14 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"go-driver/driver"
 	"go-driver/log"
 	"net"
 	"runtime/debug"
 	"time"
-
-	"google.golang.org/protobuf/proto"
 )
 
 type Session struct {
 	net.Conn
-	Id    string
-	Token string
-	driver.Marshal
-	driver.Unmarshal
 	Buffsize int
 	Timeout  time.Duration
 	Handler
@@ -50,36 +43,14 @@ func (x *Session) Poll(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		if err := x.Handle(x, request); err != nil {
-			return err
-		}
-		if _, err := buffer.Discard(len(request)); err != nil {
+		if err := x.Handle(ctx, request); err != nil {
 			return err
 		}
 	}
 }
 
-func (x *Session) Push(ctx context.Context, message proto.Message) (int, error) {
-	b, err := x.Marshal.Marshal(message)
-	if err != nil {
-		return 0, err
-	}
-	return x.Write(b)
-}
-
-func (x *Session) Handle(w driver.ResponsePusher, req Request) error {
-	request, err := x.Unmarshal.Unmarshal(req)
-	if err != nil {
-		return err
-	}
-	reply, err := x.Unmarshal.Unmarshal(NewRequest(req.Reply()))
-	if err != nil {
-		return err
-	}
-	if x.Handler != nil {
-		return x.Handler.Handle(w, request, reply)
-	}
-	return nil
+func (x *Session) Push(ctx context.Context, response Response) (int, error) {
+	return x.Write(response)
 }
 
 func (x *Session) Close() error {

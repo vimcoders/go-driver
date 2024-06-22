@@ -1,23 +1,47 @@
 package session
 
-// var Messages = []proto.Message{
-// 	&pb.PingRequest{},
-// 	&pb.PingResponse{},
-// 	&pb.LoginRequest{},
-// 	&pb.LoginResponse{},
-// }
+import (
+	"errors"
+	"fmt"
+	"go-driver/pb"
 
-// type Unmarshal interface {
-// 	Unmarshal(b []byte) (proto.Message, proto.Message, error)
-// }
+	"google.golang.org/protobuf/proto"
+)
 
-// type Marshal interface {
-// 	Marshal(i proto.Message) ([]byte, error)
-// }
+type Message []proto.Message
 
-// type Protobuf struct {
-// 	Messages []proto.Message
-// }
+func (x Message) Unmarshal(req []byte) (proto.Message, error) {
+	if len(req) < 2 {
+		return nil, errors.New("protobuf data too short")
+	}
+	var request Request = req
+	kind := request.Kind()
+	if kind >= uint16(len(x)) {
+		return nil, fmt.Errorf("message id %v not registered", kind)
+	}
+	message := x[kind].ProtoReflect().New().Interface()
+	if err := proto.Unmarshal(request.Message(), message); err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
+func (x Message) Marshal(response proto.Message) ([]byte, error) {
+	for i := uint16(0); i < uint16(len(x)); i++ {
+		if proto.MessageName(response) != proto.MessageName(x[i]) {
+			continue
+		}
+		return NewResponse(i, response)
+	}
+	return nil, fmt.Errorf("message %s not registered", proto.MessageName(response))
+}
+
+var Messages = Message{
+	&pb.PingRequest{},
+	&pb.PingResponse{},
+	&pb.LoginRequest{},
+	&pb.LoginResponse{},
+}
 
 // func (x *Protobuf) Unmarshal(b []byte) (proto.Message, proto.Message, error) {
 // 	if len(b) < 2 {

@@ -6,14 +6,13 @@ import (
 	"net"
 	"time"
 
+	"go-driver/app/comet/driver"
 	"go-driver/conf"
-	"go-driver/driver"
 	"go-driver/etcdx"
 	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/quicx"
 	"go-driver/rpcx"
-	"go-driver/session"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )
@@ -21,9 +20,9 @@ import (
 var handler = &Handler{}
 
 type Handler struct {
-	iClient *rpcx.Client
 	driver.Marshal
 	driver.Unmarshal
+	iClient *rpcx.Client
 	*conf.Conf
 }
 
@@ -57,8 +56,8 @@ func MakeHandler(opt conf.Conf) *Handler {
 		log.Info(conn.RemoteAddr().String())
 		handler.iClient = rpcx.NewClient(conn)
 	}
-	handler.Marshal = session.Messages
-	handler.Unmarshal = session.Messages
+	handler.Marshal = driver.Messages
+	handler.Unmarshal = driver.Messages
 	return handler
 }
 
@@ -66,12 +65,10 @@ func MakeHandler(opt conf.Conf) *Handler {
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	newSession := &Session{
 		iClient: x.iClient,
-		Session: &session.Session{
-			Timeout:   time.Minute * 2,
-			Buffsize:  512,
-			Conn:      conn,
-			Marshal:   x.Marshal,
-			Unmarshal: x.Unmarshal,
+		Session: &driver.Session{
+			Timeout:  time.Minute * 2,
+			Buffsize: 512,
+			Conn:     conn,
 		},
 	}
 	newSession.Handler = newSession
