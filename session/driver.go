@@ -1,4 +1,4 @@
-// TCP，UDP 接入层
+// TCP，UDP 接入层加密解密
 // TODO:: 熔断，限流，降级
 package session
 
