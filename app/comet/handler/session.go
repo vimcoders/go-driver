@@ -15,7 +15,7 @@ type Session struct {
 	driver.Marshal
 	driver.Unmarshal
 	*driver.Session
-	rpc   *rpcx.Client
+	*rpcx.Client
 	Token string
 }
 
@@ -29,7 +29,7 @@ func (x *Session) Handle(ctx context.Context, req driver.Request) error {
 		return err
 	}
 	if len(x.Token) > 0 {
-		if err := x.rpc.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
+		if err := x.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
 			return err
 		}
 		if err := x.Push(ctx, reply); err != nil {
@@ -41,7 +41,7 @@ func (x *Session) Handle(ctx context.Context, req driver.Request) error {
 	if !ok {
 		return errors.New("!ok")
 	}
-	if err := x.rpc.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: loginRequest.Token}); err != nil {
+	if err := x.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: loginRequest.Token}); err != nil {
 		return err
 	}
 	loginResponse, ok := reply.(*pb.LoginResponse)
@@ -63,7 +63,7 @@ func (x *Session) Push(ctx context.Context, message proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if _, err := x.Write(response); err != nil {
+	if _, err := x.Session.Push(ctx, response); err != nil {
 		return err
 	}
 	return nil

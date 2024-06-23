@@ -16,15 +16,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Query[T driver.Document] struct {
+type Queryer[T driver.Document] struct {
 	*mongo.Database
 }
 
-func WithQuery[T driver.Document](mongo *mongo.Database) *Query[T] {
-	return &Query[T]{Database: mongo}
+func Query[T driver.Document](x *Mongo, filter interface{}) (docments []T, err error) {
+	return WithQuery[T](x).Query(filter)
 }
 
-func (x Query[T]) Query(filter interface{}) (docments []T, err error) {
+func WithQuery[T driver.Document](mongo *Mongo) *Queryer[T] {
+	return &Queryer[T]{Database: mongo.Database}
+}
+
+func (x Queryer[T]) Query(filter interface{}) (docments []T, err error) {
 	var doc T
 	c := x.Collection(doc.DocumentName())
 	if c == nil {

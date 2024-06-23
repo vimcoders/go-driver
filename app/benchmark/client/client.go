@@ -86,7 +86,7 @@ func (x *Client) Login() error {
 	if err := x.Register(); err != nil {
 		return err
 	}
-	x.Conn = conn
+	x.Session = session.NewSession(conn)
 	x.Handler = x
 	go x.Poll(context.Background())
 	go x.Keeplive(context.Background())
@@ -140,7 +140,7 @@ func (x *Client) Push(ctx context.Context, message proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if _, err := x.Write(response); err != nil {
+	if _, err := x.Session.Push(ctx, response); err != nil {
 		return err
 	}
 	return nil

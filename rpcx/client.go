@@ -30,7 +30,7 @@ const (
 )
 
 type Client struct {
-	net.Conn
+	w net.Conn
 	sync.RWMutex
 	messageId int32
 	pending   map[int32]chan *pb.Message
@@ -38,7 +38,7 @@ type Client struct {
 
 func NewClient(c net.Conn) *Client {
 	client := &Client{
-		Conn:    c,
+		w:       c,
 		pending: make(map[int32]chan *pb.Message),
 	}
 	go client.Poll(context.Background())
@@ -62,18 +62,18 @@ func (x *Client) Poll(ctx context.Context) (err error) {
 			log.Error(err.Error())
 			debug.PrintStack()
 		}
-		if err := x.Close(); err != nil {
+		if err := x.w.Close(); err != nil {
 			log.Error(err.Error())
 		}
 	}()
-	buffer := bufio.NewReaderSize(x.Conn, ReaderBuffsize)
+	buffer := bufio.NewReaderSize(x.w, ReaderBuffsize)
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
 		default:
 		}
-		if err := x.SetReadDeadline(time.Now().Add(TIMEOUT)); err != nil {
+		if err := x.w.SetReadDeadline(time.Now().Add(TIMEOUT)); err != nil {
 			return err
 		}
 		bytes, err := buffer.Peek(LENGTH)
@@ -133,10 +133,10 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 	buffer := make(driver.Buffer, 4)
 	binary.BigEndian.PutUint32(buffer, uint32(len(b)))
 	buffer.Write(b)
-	if err := x.SetWriteDeadline(time.Now().Add(TIMEOUT)); err != nil {
+	if err := x.w.SetWriteDeadline(time.Now().Add(TIMEOUT)); err != nil {
 		return err
 	}
-	if _, err := x.Conn.Write(buffer); err != nil {
+	if _, err := x.w.Write(buffer); err != nil {
 		return err
 	}
 	select {

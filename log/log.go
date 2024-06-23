@@ -43,11 +43,6 @@ func Errorf(format string, a ...any) {
 	logger.Errorf(format, a...)
 }
 
-type Handler interface {
-	Handle(context.Context, []byte) error
-	Close() error
-}
-
 type SysLogger struct {
 	Handler
 }

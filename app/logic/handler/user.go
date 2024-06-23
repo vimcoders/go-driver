@@ -16,10 +16,7 @@ func (x *Handler) GetUser(userId int64) *driver.User {
 			return x.Users[i]
 		}
 	}
-	filter := bson.M{
-		"user_id": userId,
-	}
-	users, err := mongox.WithQuery[*driver.User](x.Mongo.Database).Query(filter)
+	users, err := mongox.Query[*driver.User](x.Mongo, bson.M{"user_id": userId})
 	if err != nil {
 		log.Error(err.Error())
 		return nil

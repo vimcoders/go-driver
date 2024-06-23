@@ -10,7 +10,6 @@ import (
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
-	"go-driver/pb"
 	"go-driver/quicx"
 	"go-driver/rpcx"
 
@@ -22,7 +21,7 @@ var handler = &Handler{}
 type Handler struct {
 	driver.Marshal
 	driver.Unmarshal
-	rpc *rpcx.Client
+	c *rpcx.Client
 	*etcd.Client
 	*conf.Conf
 }
@@ -66,32 +65,21 @@ func (x *Handler) DialLogic() error {
 			return err
 		}
 		log.Info(conn.RemoteAddr().String())
-		handler.rpc = rpcx.NewClient(conn)
+		handler.c = rpcx.NewClient(conn)
 	}
 	return nil
 }
 
 // Handle receives and executes redis commands
-func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
+func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		rpc:       x.rpc,
+		Client:    x.c,
 		Marshal:   x.Marshal,
 		Unmarshal: x.Unmarshal,
-		Session: &driver.Session{
-			Timeout:  time.Minute * 2,
-			Buffsize: 512,
-			Conn:     conn,
-		},
+		Session:   driver.NewSession(c),
 	}
 	newSession.Handler = newSession
-	go newSession.Poll(ctx)
-}
-
-func (x *Handler) LoginRequest() {
-	var replay pb.LoginResponse
-	if err := x.rpc.Call(context.Background(), &pb.LoginRequest{}, &replay); err != nil {
-		log.Error(err.Error())
-	}
+	go newSession.Session.Poll(ctx)
 }
 
 // Close stops handler

@@ -11,10 +11,14 @@ import (
 )
 
 type Session struct {
-	net.Conn
+	w        net.Conn
 	Buffsize int
 	Timeout  time.Duration
 	Handler
+}
+
+func NewSession(w net.Conn) *Session {
+	return &Session{w: w, Buffsize: 512, Timeout: time.Minute}
 }
 
 func (x *Session) Poll(ctx context.Context) (err error) {
@@ -29,17 +33,17 @@ func (x *Session) Poll(ctx context.Context) (err error) {
 		}
 		x.Close()
 	}()
-	buffer := bufio.NewReaderSize(x.Conn, x.Buffsize)
+	buffer := bufio.NewReaderSize(x.w, x.Buffsize)
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
 		default:
 		}
-		if err := x.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
+		if err := x.w.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		request, err := ReadRequest(buffer)
+		request, err := parseRequest(buffer)
 		if err != nil {
 			return err
 		}
@@ -50,7 +54,7 @@ func (x *Session) Poll(ctx context.Context) (err error) {
 }
 
 func (x *Session) Push(ctx context.Context, response Response) (int, error) {
-	return x.Write(response)
+	return x.w.Write(response)
 }
 
 func (x *Session) Close() error {
