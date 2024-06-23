@@ -88,7 +88,7 @@ func (x *Client) Login() error {
 	}
 	x.Session = session.NewSession(conn)
 	x.Handler = x
-	go x.Poll(context.Background())
+	go x.Pull(context.Background())
 	go x.Keeplive(context.Background())
 	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
 		log.Error(err.Error())

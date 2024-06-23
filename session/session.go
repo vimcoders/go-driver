@@ -21,7 +21,7 @@ func NewSession(w net.Conn) *Session {
 	return &Session{w: w, Buffsize: 512, Timeout: time.Minute}
 }
 
-func (x *Session) Poll(ctx context.Context) (err error) {
+func (x *Session) Pull(ctx context.Context) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Error(e)

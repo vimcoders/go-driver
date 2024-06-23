@@ -79,7 +79,7 @@ func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 		Session:   driver.NewSession(c),
 	}
 	newSession.Handler = newSession
-	go newSession.Session.Poll(ctx)
+	go newSession.Session.Pull(ctx)
 }
 
 // Close stops handler
