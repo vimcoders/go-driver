@@ -4,8 +4,8 @@ package main
 import (
 	"fmt"
 	benchmark "go-driver/app/benchmark/client"
+	"go-driver/handle"
 	"go-driver/log"
-	"go-driver/session"
 	"os"
 	"os/signal"
 	"runtime"
@@ -19,8 +19,8 @@ func main() {
 		client := benchmark.Client{
 			Url:       "http://127.0.0.1:9800/api/v1/passport/login",
 			CometUrl:  "127.0.0.1:9600",
-			Marshal:   session.Messages,
-			Unmarshal: session.Messages,
+			Marshal:   handle.Messages,
+			Unmarshal: handle.Messages,
 		}
 		if err := client.Login(); err != nil {
 			log.Error(err.Error())

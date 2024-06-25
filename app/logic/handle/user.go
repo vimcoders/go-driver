@@ -1,4 +1,4 @@
-package handler
+package handle
 
 import (
 	"go-driver/driver"
@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (x *Handler) GetUser(userId int64) *driver.User {
+func (x *Handle) GetUser(userId int64) *driver.User {
 	x.Lock()
 	defer x.Unlock()
 	for i := 0; i < len(x.Users); i++ {

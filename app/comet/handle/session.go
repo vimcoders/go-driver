@@ -1,4 +1,4 @@
-package handler
+package handle
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 type Session struct {
 	driver.Marshal
 	driver.Unmarshal
-	*driver.Session
+	h *driver.Handle
 	*rpcx.Client
 	Token string
 }
@@ -58,7 +58,7 @@ func (x *Session) Push(ctx context.Context, message proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if _, err := x.Session.Push(ctx, response); err != nil {
+	if _, err := x.h.Push(ctx, response); err != nil {
 		return err
 	}
 	return nil

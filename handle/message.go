@@ -1,4 +1,4 @@
-package session
+package handle
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 
 type Message []proto.Message
 
+// 将一个来自底层的二进制流反序列化成一个对象
 func (x Message) Unmarshal(req []byte) (proto.Message, error) {
 	if len(req) < 2 {
 		return nil, errors.New("protobuf data too short")
@@ -26,16 +27,18 @@ func (x Message) Unmarshal(req []byte) (proto.Message, error) {
 	return message, nil
 }
 
+// 将一个对象序列化成一个二进制流
 func (x Message) Marshal(response proto.Message) ([]byte, error) {
 	for i := uint16(0); i < uint16(len(x)); i++ {
 		if proto.MessageName(response) != proto.MessageName(x[i]) {
 			continue
 		}
-		return NewResponse(i, response)
+		return encode(i, response)
 	}
 	return nil, fmt.Errorf("message %s not registered", proto.MessageName(response))
 }
 
+// 定义所有的协议号
 var Messages = Message{
 	&pb.PingRequest{},
 	&pb.PingResponse{},

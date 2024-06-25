@@ -1,4 +1,4 @@
-package handler
+package handle
 
 import (
 	"net/http"
@@ -9,12 +9,12 @@ import (
 	"go-driver/token"
 )
 
-func (x *Handler) LoginRequest(ctx *Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (x *Handle) LoginRequest(ctx *Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	//ctx.Insert()
 	return &pb.LoginResponse{Code: http.StatusOK}, nil
 }
 
-func (x *Handler) Authentication(opt rpcx.Option) *Context {
+func (x *Handle) Authentication(opt rpcx.Option) *Context {
 	jwtToken, err := token.ParseToken(opt.Get("token"), []byte(x.Opt.Token.Key))
 	if err != nil {
 		return &Context{User: &driver.User{}, Mongo: x.Mongo}

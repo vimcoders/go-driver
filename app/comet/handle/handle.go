@@ -1,4 +1,4 @@
-package handler
+package handle
 
 import (
 	"context"
@@ -16,9 +16,9 @@ import (
 	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handler{}
+var handler = &Handle{}
 
-type Handler struct {
+type Handle struct {
 	driver.Marshal
 	driver.Unmarshal
 	c *rpcx.Client
@@ -27,7 +27,7 @@ type Handler struct {
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt conf.Conf) *Handler {
+func MakeHandler(opt conf.Conf) *Handle {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -45,7 +45,7 @@ func MakeHandler(opt conf.Conf) *Handler {
 	return handler
 }
 
-func (x *Handler) DialLogic() error {
+func (x *Handle) DialLogic() error {
 	key := x.Etcd.Version + "/service/logic"
 	response, err := etcdx.WithQuery[etcdx.Service](x.Client).Query(key)
 	if err != nil {
@@ -71,18 +71,18 @@ func (x *Handler) DialLogic() error {
 }
 
 // Handle receives and executes redis commands
-func (x *Handler) Handle(ctx context.Context, c net.Conn) {
+func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
 		Client:    x.c,
 		Marshal:   x.Marshal,
 		Unmarshal: x.Unmarshal,
-		Session:   driver.NewSession(c),
+		h:         driver.NewHandle(c),
 	}
-	newSession.Handler = newSession
-	go newSession.Session.Pull(ctx)
+	newSession.h.Handler = newSession
+	go newSession.h.Pull(ctx)
 }
 
 // Close stops handler
-func (x *Handler) Close() error {
+func (x *Handle) Close() error {
 	return nil
 }

@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-driver/driver"
+	"go-driver/handle"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/session"
 	"io"
 	"math/rand"
 	"net"
@@ -28,7 +28,7 @@ type ResponseWriter[T any] struct {
 type Client struct {
 	Url      string
 	CometUrl string
-	*session.Session
+	h        *handle.Handle
 	driver.Marshal
 	driver.Unmarshal
 	Token string
@@ -86,9 +86,9 @@ func (x *Client) Login() error {
 	if err := x.Register(); err != nil {
 		return err
 	}
-	x.Session = session.NewSession(conn)
-	x.Handler = x
-	go x.Pull(context.Background())
+	x.h = handle.NewHandle(conn)
+	x.h.Handler = x
+	go x.h.Pull(context.Background())
 	go x.Keeplive(context.Background())
 	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
 		log.Error(err.Error())
@@ -101,7 +101,7 @@ func (x *Client) LoginResponse(response *pb.LoginResponse) {
 
 }
 
-func (x *Client) Handle(ctx context.Context, request session.Request) error {
+func (x *Client) Handle(ctx context.Context, request handle.Request) error {
 	// message, _, err := x.Unmarshal.Unmarshal(request)
 	// if err != nil {
 	// 	log.Error(err.Error())
@@ -140,7 +140,7 @@ func (x *Client) Push(ctx context.Context, message proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if _, err := x.Session.Push(ctx, response); err != nil {
+	if _, err := x.h.Push(ctx, response); err != nil {
 		return err
 	}
 	return nil

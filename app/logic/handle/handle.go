@@ -1,4 +1,4 @@
-package handler
+package handle
 
 import (
 	"context"
@@ -20,9 +20,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var handler = &Handler{}
+var handler = &Handle{}
 
-type Handler struct {
+type Handle struct {
 	*mongox.Mongo
 	*etcd.Client
 	sync.RWMutex
@@ -31,7 +31,7 @@ type Handler struct {
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt *conf.Conf) *Handler {
+func MakeHandler(opt *conf.Conf) *Handle {
 	log.Info("etcd endpoints:", opt.Etcd.Endpoints)
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
@@ -52,7 +52,7 @@ func MakeHandler(opt *conf.Conf) *Handler {
 }
 
 // Handle receives and executes redis commands
-func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
+func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
 	handle := &rpcx.Handle{
 		Conn:     conn,
@@ -62,7 +62,7 @@ func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	handle.Register(x)
 }
 
-func (x *Handler) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+func (x *Handle) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	x.Lock()
 	defer x.Unlock()
 	// x.total++
@@ -71,7 +71,7 @@ func (x *Handler) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingRespon
 }
 
 // Close stops handler
-func (x *Handler) Close() error {
+func (x *Handle) Close() error {
 	for i := 0; i < len(x.Users); i++ {
 		// x.Mongo.Insert(x.Users[i])
 		// x.Mongo.Update(x.Users[i])
@@ -79,7 +79,7 @@ func (x *Handler) Close() error {
 	return nil
 }
 
-func (x *Handler) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Option) (err error) {
+func (x *Handle) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Option) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Error(e)

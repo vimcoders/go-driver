@@ -1,4 +1,5 @@
 // 网关服务 请求转发到服务去处理
+// 同时我们也会主动推送很多数据，它的推送速度就像彗星一样的快
 package main
 
 import (
@@ -16,7 +17,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/comet/handler"
+	"go-driver/app/comet/handle"
 	"go-driver/conf"
 	"go-driver/log"
 	"go-driver/quicx"
@@ -36,7 +37,7 @@ func main() {
 	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
 		panic(err.Error())
 	}
-	handler := handler.MakeHandler(opt)
+	handler := handle.MakeHandler(opt)
 	defer handler.Close()
 	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	if err != nil {

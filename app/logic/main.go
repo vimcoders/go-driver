@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"go-driver/app/logic/handler"
+	"go-driver/app/logic/handle"
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
@@ -41,7 +41,7 @@ func main() {
 		panic(err.Error())
 	}
 	log.Info("Unmarshal YAML DOWN")
-	handler := handler.MakeHandler(&opt)
+	handler := handle.MakeHandler(&opt)
 	defer handler.Close()
 	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	// if err != nil {
