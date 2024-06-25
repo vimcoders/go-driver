@@ -74,7 +74,7 @@ func (x *Client) Poll(ctx context.Context) (err error) {
 		if err := x.w.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		message, err := decodeRequest(buffer)
+		message, err := decode(buffer)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: fmt.Sprintf("%v", messageId)})
 	message.Option = append(message.Option, &pb.Option{Key: MESSAGENAME, Value: string(proto.MessageName(request).Name())})
 	message.Option = append(message.Option, opt...)
-	b, err := encodeRequest(message)
+	b, err := encode(message)
 	if err != nil {
 		return err
 	}

@@ -21,7 +21,7 @@ type Handler interface {
 }
 
 type ResponsePusher interface {
-	Push(context.Context, proto.Message) (int, error)
+	Push(context.Context, proto.Message) error
 }
 
 type Buffer []byte

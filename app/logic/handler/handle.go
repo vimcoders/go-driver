@@ -54,8 +54,12 @@ func MakeHandler(opt *conf.Conf) *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	server := &rpcx.Server{Conn: conn, Buffsize: 16 * 1024, Timeout: time.Second * 120}
-	server.Register(x)
+	handle := &rpcx.Handle{
+		Conn:     conn,
+		Buffsize: 16 * 1024,
+		Timeout:  time.Second * 120,
+	}
+	handle.Register(x)
 }
 
 func (x *Handler) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {
@@ -108,7 +112,7 @@ func (x *Handler) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Op
 	if len(values) <= 0 {
 		return errors.New("len(values) <= 0")
 	}
-	if _, err := w.Push(context.Background(), values[0].Interface().(proto.Message)); err != nil {
+	if err := w.Push(context.Background(), values[0].Interface().(proto.Message)); err != nil {
 		return err
 	}
 	return nil

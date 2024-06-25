@@ -36,12 +36,12 @@ func MakeHandler() *Handler {
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	server := &rpcx.Server{
+	handle := &rpcx.Handle{
 		Conn:     conn,
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
 	}
-	server.Register(x)
+	handle.Register(x)
 }
 
 func (x *Handler) PingRequest(ctx context.Context, request *pb.PingRequest) (proto.Message, error) {

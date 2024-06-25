@@ -2,11 +2,8 @@ package rpcx
 
 import (
 	"bufio"
-	"context"
 	"encoding/binary"
 	"fmt"
-	"net"
-	"time"
 
 	"go-driver/driver"
 	"go-driver/pb"
@@ -42,35 +39,7 @@ func (x Option) Get(key string) string {
 	return ""
 }
 
-type Response struct {
-	Option
-	net.Conn
-	Timeout time.Duration
-}
-
-func (x *Response) Push(ctx context.Context, iMessage proto.Message) (int, error) {
-	b, err := proto.Marshal(iMessage)
-	if err != nil {
-		return 0, err
-	}
-	message := &pb.Message{
-		Message: b,
-	}
-	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: x.Get(MESSAGEID)})
-	response, err := encodeRequest(message)
-	if err != nil {
-		return 0, err
-	}
-	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
-		return 0, err
-	}
-	if _, err := x.Conn.Write(response); err != nil {
-		return 0, err
-	}
-	return len(response), nil
-}
-
-func decodeRequest(b *bufio.Reader) (*pb.Message, error) {
+func decode(b *bufio.Reader) (*pb.Message, error) {
 	headerBytes, err := b.Peek(4)
 	if err != nil {
 		return nil, err
@@ -93,7 +62,7 @@ func decodeRequest(b *bufio.Reader) (*pb.Message, error) {
 	return &message, nil
 }
 
-func encodeRequest(message proto.Message) ([]byte, error) {
+func encode(message proto.Message) ([]byte, error) {
 	request, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
