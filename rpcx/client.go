@@ -3,7 +3,6 @@ package rpcx
 import (
 	"bufio"
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
@@ -13,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"go-driver/driver"
 	"go-driver/log"
 	"go-driver/pb"
 
@@ -21,12 +19,8 @@ import (
 )
 
 const (
-	ReaderBuffsize = 16 * 1024
-	WriterBuffsize = 16 * 1024
-	LENGTH         = 4
-	TIMEOUT        = time.Second * 120
-	MESSAGEID      = "message_id"
-	MESSAGENAME    = "message_name"
+	MESSAGEID   = "message_id"
+	MESSAGENAME = "message_name"
 )
 
 type Client struct {
@@ -34,12 +28,16 @@ type Client struct {
 	sync.RWMutex
 	messageId int32
 	pending   map[int32]chan *pb.Message
+	Buffsize  uint16
+	Timeout   time.Duration
 }
 
 func NewClient(c net.Conn) *Client {
 	client := &Client{
-		w:       c,
-		pending: make(map[int32]chan *pb.Message),
+		w:        c,
+		pending:  make(map[int32]chan *pb.Message),
+		Buffsize: 16 * 1024,
+		Timeout:  time.Second * 120,
 	}
 	go client.Poll(context.Background())
 	go client.Keeplive(context.Background())
@@ -66,36 +64,21 @@ func (x *Client) Poll(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	buffer := bufio.NewReaderSize(x.w, ReaderBuffsize)
+	buffer := bufio.NewReaderSize(x.w, int(x.Buffsize))
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
 		default:
 		}
-		if err := x.w.SetReadDeadline(time.Now().Add(TIMEOUT)); err != nil {
+		if err := x.w.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		bytes, err := buffer.Peek(LENGTH)
+		message, err := decodeRequest(buffer)
 		if err != nil {
 			return err
 		}
-		length := binary.BigEndian.Uint32(bytes)
-		if int(length) > buffer.Size() {
-			return fmt.Errorf("header %v too long", length)
-		}
-		message, err := buffer.Peek(int(length) + len(bytes))
-		if err != nil {
-			return err
-		}
-		var response pb.Message
-		if err := proto.Unmarshal(message[LENGTH:], &response); err != nil {
-			return err
-		}
-		if _, err := buffer.Discard(len(message)); err != nil {
-			return err
-		}
-		var opt Option = response.Option
+		var opt Option = message.Option
 		messageId, err := strconv.Atoi(opt.Get(MESSAGEID))
 		if err != nil {
 			return err
@@ -104,7 +87,7 @@ func (x *Client) Poll(ctx context.Context) (err error) {
 		if done == nil {
 			continue
 		}
-		done <- &response
+		done <- message
 	}
 }
 
@@ -123,20 +106,17 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 		return err
 	}
 	message := &pb.Message{Message: m}
-	message.Option = append(message.Option, opt...)
 	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: fmt.Sprintf("%v", messageId)})
 	message.Option = append(message.Option, &pb.Option{Key: MESSAGENAME, Value: string(proto.MessageName(request).Name())})
-	b, err := proto.Marshal(message)
+	message.Option = append(message.Option, opt...)
+	b, err := encodeRequest(message)
 	if err != nil {
 		return err
 	}
-	buffer := make(driver.Buffer, 4)
-	binary.BigEndian.PutUint32(buffer, uint32(len(b)))
-	buffer.Write(b)
-	if err := x.w.SetWriteDeadline(time.Now().Add(TIMEOUT)); err != nil {
+	if err := x.w.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
 		return err
 	}
-	if _, err := x.w.Write(buffer); err != nil {
+	if _, err := x.w.Write(b); err != nil {
 		return err
 	}
 	select {

@@ -1,8 +1,10 @@
 package rpcx
 
 import (
+	"bufio"
 	"context"
 	"encoding/binary"
+	"fmt"
 	"net"
 	"time"
 
@@ -41,32 +43,62 @@ func (x Option) Get(key string) string {
 }
 
 type Response struct {
-	Option Option
+	Option
 	net.Conn
+	Timeout time.Duration
 }
 
-func (x *Response) Push(ctx context.Context, message proto.Message) (int, error) {
-	var opt Option = x.Option
-	b, err := proto.Marshal(message)
+func (x *Response) Push(ctx context.Context, iMessage proto.Message) (int, error) {
+	b, err := proto.Marshal(iMessage)
 	if err != nil {
 		return 0, err
 	}
-	response := &pb.Message{
+	message := &pb.Message{
 		Message: b,
 	}
-	response.Option = append(response.Option, &pb.Option{Key: MESSAGEID, Value: opt.Get(MESSAGEID)})
-	iResponse, err := proto.Marshal(response)
+	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: x.Get(MESSAGEID)})
+	response, err := encodeRequest(message)
 	if err != nil {
 		return 0, err
 	}
-	buffer := make(driver.Buffer, 4)
-	binary.BigEndian.PutUint32(buffer, uint32(len(iResponse)))
-	buffer.Write(iResponse)
-	if err := x.SetWriteDeadline(time.Now().Add(TIMEOUT)); err != nil {
+	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
 		return 0, err
 	}
-	if _, err := x.Conn.Write(buffer); err != nil {
+	if _, err := x.Conn.Write(response); err != nil {
 		return 0, err
 	}
-	return len(iResponse), nil
+	return len(response), nil
+}
+
+func decodeRequest(b *bufio.Reader) (*pb.Message, error) {
+	headerBytes, err := b.Peek(4)
+	if err != nil {
+		return nil, err
+	}
+	header := binary.BigEndian.Uint32(headerBytes)
+	if int(header) > b.Size() {
+		return nil, fmt.Errorf("header %v too long", header)
+	}
+	request, err := b.Peek(int(header))
+	if err != nil {
+		return nil, err
+	}
+	if _, err := b.Discard(len(request)); err != nil {
+		return nil, err
+	}
+	var message pb.Message
+	if err := proto.Unmarshal(request[4:], &message); err != nil {
+		return nil, err
+	}
+	return &message, nil
+}
+
+func encodeRequest(message proto.Message) ([]byte, error) {
+	request, err := proto.Marshal(message)
+	if err != nil {
+		return nil, err
+	}
+	var b [4]byte
+	binary.BigEndian.PutUint32(b[:], uint32(len(b)+len(request)))
+	return append(b[:], request...), err
 }

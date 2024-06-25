@@ -54,7 +54,7 @@ func MakeHandler(opt *conf.Conf) *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	server := &rpcx.Server{Conn: conn}
+	server := &rpcx.Server{Conn: conn, Buffsize: 16 * 1024, Timeout: time.Second * 120}
 	server.Register(x)
 }
 

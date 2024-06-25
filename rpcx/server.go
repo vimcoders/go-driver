@@ -3,16 +3,13 @@ package rpcx
 import (
 	"bufio"
 	"context"
-	"encoding/binary"
 	"errors"
-	"fmt"
 	"net"
 	"reflect"
 	"time"
 
 	"go-driver/driver"
 	"go-driver/log"
-	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -37,10 +34,12 @@ func ListenAndServe(ctx context.Context, listener net.Listener, handler driver.H
 
 type Server struct {
 	net.Conn
-	Handler interface{} // handler to invoke, http.DefaultServeMux if nil
+	Handler  interface{} // handler to invoke, http.DefaultServeMux if nil
+	Buffsize uint16
+	Timeout  time.Duration
 }
 
-func (x *Server) Register(handler Handler) {
+func (x *Server) Register(handler interface{}) {
 	x.Handler = handler
 	go x.Poll(context.Background())
 }
@@ -86,43 +85,28 @@ func (x *Server) Poll(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	buffer := bufio.NewReaderSize(x.Conn, ReaderBuffsize)
+	buffer := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
 		default:
 		}
-		if err := x.SetReadDeadline(time.Now().Add(TIMEOUT)); err != nil {
+		if err := x.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		bytes, err := buffer.Peek(LENGTH)
+		message, err := decodeRequest(buffer)
 		if err != nil {
-			return err
-		}
-		length := binary.BigEndian.Uint32(bytes)
-		if int(length) > buffer.Size() {
-			return fmt.Errorf("header %v too long", length)
-		}
-		message, err := buffer.Peek(int(length) + len(bytes))
-		if err != nil {
-			return err
-		}
-		var request pb.Message
-		if err := proto.Unmarshal(message[LENGTH:], &request); err != nil {
-			return err
-		}
-		if _, err := buffer.Discard(len(message)); err != nil {
 			return err
 		}
 		response := &Response{
-			Option: request.Option,
+			Option: message.Option,
 			Conn:   x.Conn,
 		}
 		if h, ok := x.Handler.(Handler); ok {
-			go h.ServeRPCX(response, request.Message, request.Option)
+			go h.ServeRPCX(response, message.Message, message.Option)
 			continue
 		}
-		go x.ServeRPCX(response, request.Message, request.Option)
+		go x.ServeRPCX(response, message.Message, message.Option)
 	}
 }
