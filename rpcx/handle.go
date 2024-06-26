@@ -23,7 +23,7 @@ type Handle struct {
 
 func (x *Handle) Register(handler interface{}) {
 	x.Handler = handler
-	go x.Poll(context.Background())
+	go x.Pull(context.Background())
 }
 
 func (x *Handle) ServeRPCX(w ResponsePusher, b []byte, opt Option) (err error) {
@@ -59,7 +59,7 @@ func (x *Handle) ServeRPCX(w ResponsePusher, b []byte, opt Option) (err error) {
 	return nil
 }
 
-func (x *Handle) Poll(ctx context.Context) (err error) {
+func (x *Handle) Pull(ctx context.Context) (err error) {
 	defer func() {
 		if err != nil {
 			log.Error(err.Error())

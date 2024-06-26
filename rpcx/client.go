@@ -39,7 +39,7 @@ func NewClient(c net.Conn) *Client {
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
 	}
-	go client.Poll(context.Background())
+	go client.Pull(context.Background())
 	go client.Keeplive(context.Background())
 	return client
 }
@@ -54,7 +54,7 @@ func (x *Client) Keeplive(ctx context.Context) {
 	}
 }
 
-func (x *Client) Poll(ctx context.Context) (err error) {
+func (x *Client) Pull(ctx context.Context) (err error) {
 	defer func() {
 		if err != nil {
 			log.Error(err.Error())
