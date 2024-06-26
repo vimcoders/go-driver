@@ -19,8 +19,6 @@ import (
 var handler = &Handle{}
 
 type Handle struct {
-	driver.Marshal
-	driver.Unmarshal
 	c *rpcx.Client
 	*etcd.Client
 	*conf.Conf
@@ -37,8 +35,6 @@ func MakeHandler(opt conf.Conf) *Handle {
 	}
 	handler.Conf = &opt
 	handler.Client = cli
-	handler.Marshal = driver.Messages
-	handler.Unmarshal = driver.Messages
 	if err := handler.DialLogic(); err != nil {
 		panic(err.Error())
 	}
@@ -73,10 +69,8 @@ func (x *Handle) DialLogic() error {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		Client:    x.c,
-		Marshal:   x.Marshal,
-		Unmarshal: x.Unmarshal,
-		h:         driver.NewHandle(c),
+		Client: x.c,
+		h:      driver.NewHandle(c),
 	}
 	newSession.h.Handler = newSession
 	go newSession.h.Pull(ctx)

@@ -4,9 +4,11 @@ package handle
 
 import (
 	"context"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // 我们将在这里定义一个接口来处理我们解析出来的二进制流
 type Handler interface {
-	Handle(ctx context.Context, request Request) error
+	Handle(ctx context.Context, request, reply proto.Message) error
 }
