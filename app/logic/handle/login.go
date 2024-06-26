@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"go-driver/driver"
+	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/rpcx"
 	"go-driver/token"
@@ -11,6 +12,7 @@ import (
 
 func (x *Handle) LoginRequest(ctx *Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	//ctx.Insert()
+	log.Debug(req)
 	return &pb.LoginResponse{Code: http.StatusOK}, nil
 }
 

@@ -65,6 +65,7 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 func (x *Handle) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	x.Lock()
 	defer x.Unlock()
+	log.Debug(req)
 	// x.total++
 	// log.Debugf("%v", x.total)
 	return &pb.PingResponse{}, nil

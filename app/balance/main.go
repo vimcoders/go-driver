@@ -17,7 +17,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/comet/handle"
+	"go-driver/app/balance/handle"
 	"go-driver/conf"
 	"go-driver/log"
 	"go-driver/quicx"

@@ -8,6 +8,7 @@ import (
 	"go-driver/pb"
 	"net"
 	"reflect"
+	"runtime/debug"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -50,8 +51,9 @@ func (x *Handle) ServeRPCX(w ResponsePusher, b []byte, opt Option) (err error) {
 		return errors.New("len(values) <= 0")
 	}
 	pusher := &Pusher{
-		Option: opt,
-		Conn:   x.Conn,
+		Option:  opt,
+		Conn:    x.Conn,
+		Timeout: x.Timeout,
 	}
 	pusher.Push(context.Background(), values[0].Interface().(proto.Message))
 	return nil
@@ -61,6 +63,7 @@ func (x *Handle) Poll(ctx context.Context) (err error) {
 	defer func() {
 		if err != nil {
 			log.Error(err.Error())
+			debug.PrintStack()
 		}
 		if err := x.Close(); err != nil {
 			log.Error(err.Error())
@@ -81,8 +84,9 @@ func (x *Handle) Poll(ctx context.Context) (err error) {
 			return err
 		}
 		pusher := &Pusher{
-			Option: message.Option,
-			Conn:   x.Conn,
+			Option:  message.Option,
+			Conn:    x.Conn,
+			Timeout: x.Timeout,
 		}
 		if h, ok := x.Handler.(Handler); ok {
 			go h.ServeRPCX(pusher, message.Message, message.Option)
@@ -95,7 +99,7 @@ func (x *Handle) Poll(ctx context.Context) (err error) {
 func (x *Handle) Push(ctx context.Context, iMessage *pb.Message) error {
 	pusher := Pusher{
 		Conn:    x.Conn,
-		Timeout: time.Second * 120,
+		Timeout: x.Timeout,
 	}
 	return pusher.Push(ctx, iMessage)
 }

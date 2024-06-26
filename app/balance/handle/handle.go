@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"go-driver/app/comet/driver"
+	"go-driver/app/balance/driver"
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
