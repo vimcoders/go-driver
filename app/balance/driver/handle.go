@@ -1,3 +1,4 @@
+// handle 按理说是应该在进程内自己实现，但是我们为了提高复用从外部引入
 package driver
 
 import (
@@ -6,13 +7,6 @@ import (
 )
 
 type Handle = handle.Handle
-type Request = handle.Request
-
-var Messages = handle.Messages
-
-func NewRequest(kind uint16) Request {
-	return handle.NewRequest(kind)
-}
 
 func NewHandle(w net.Conn) *handle.Handle {
 	return handle.NewHandle(w)

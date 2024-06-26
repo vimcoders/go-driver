@@ -22,6 +22,9 @@ func (x *Session) Handle(ctx context.Context, request, reply proto.Message) erro
 	if err := x.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
 		return err
 	}
+	if err := x.Push(ctx, reply); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -31,6 +34,9 @@ func (x *Session) Login(ctx context.Context, request, reply proto.Message) error
 	}
 	if loginRequest, ok := request.(*pb.LoginRequest); ok {
 		x.Token = loginRequest.Token
+	}
+	if err := x.Push(ctx, reply); err != nil {
+		return err
 	}
 	return nil
 }

@@ -1,3 +1,4 @@
+// 应该在进程内自己实现的数据结构，为了提高复用性，从外部引入的
 package driver
 
 import (
@@ -5,11 +6,4 @@ import (
 )
 
 type User = driver.User
-type Buffer = driver.Buffer
-type Marshal = driver.Marshal
-type Unmarshal = driver.Unmarshal
 type ResponsePusher = driver.ResponsePusher
-
-func NewBuffer(size int) Buffer {
-	return driver.NewBuffer(size)
-}

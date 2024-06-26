@@ -14,13 +14,14 @@ import (
 )
 
 func main() {
+	log.Info(handle.ToMessage())
 	var count int64
 	for i := 0; i < 4; i++ {
 		client := benchmark.Client{
 			Url:       "http://127.0.0.1:9800/api/v1/passport/login",
 			CometUrl:  "127.0.0.1:9600",
-			Marshal:   handle.Messages,
-			Unmarshal: handle.Messages,
+			Marshal:   handle.Marshal(),
+			Unmarshal: handle.Unmarshal(),
 		}
 		if err := client.Login(); err != nil {
 			log.Error(err.Error())

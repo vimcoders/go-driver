@@ -3,6 +3,7 @@ package handle
 import (
 	"errors"
 	"fmt"
+	"go-driver/driver"
 	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
@@ -38,12 +39,33 @@ func (x Message) Marshal(response proto.Message) ([]byte, error) {
 	return nil, fmt.Errorf("message %s not registered", proto.MessageName(response))
 }
 
+// 返回所有的协议号
+func (x Message) ToMessage() map[uint16]string {
+	m := make(map[uint16]string)
+	for i := uint16(0); i < uint16(len(messages)); i++ {
+		m[i] = string(proto.MessageName(messages[i]).Name())
+	}
+	return m
+}
+
 // 定义所有的协议号
-var Messages = Message{
+var messages = Message{
 	&pb.PingRequest{},
 	&pb.PingResponse{},
 	&pb.LoginRequest{},
 	&pb.LoginResponse{},
+}
+
+func Marshal() driver.Marshal {
+	return messages
+}
+
+func Unmarshal() driver.Unmarshal {
+	return messages
+}
+
+func ToMessage() map[uint16]string {
+	return messages.ToMessage()
 }
 
 // func (x *Protobuf) Unmarshal(b []byte) (proto.Message, proto.Message, error) {

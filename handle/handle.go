@@ -29,8 +29,8 @@ func NewHandle(w net.Conn) *Handle {
 		w:         w,
 		Buffsize:  512,
 		Timeout:   time.Minute,
-		Marshal:   Messages,
-		Unmarshal: Messages,
+		Marshal:   Marshal(),
+		Unmarshal: Unmarshal(),
 	}
 }
 
@@ -73,9 +73,6 @@ func (x *Handle) Pull(ctx context.Context) (err error) {
 			return err
 		}
 		if err := x.Handler.Handle(ctx, request, reply); err != nil {
-			return err
-		}
-		if err := x.Push(ctx, reply); err != nil {
 			return err
 		}
 	}
