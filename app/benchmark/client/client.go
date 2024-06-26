@@ -136,7 +136,7 @@ func (x *Client) Ping(ctx context.Context) (err error) {
 }
 
 func (x *Client) Push(ctx context.Context, message proto.Message) error {
-	if _, err := x.h.Push(ctx, message); err != nil {
+	if err := x.h.Push(ctx, message); err != nil {
 		return err
 	}
 	return nil

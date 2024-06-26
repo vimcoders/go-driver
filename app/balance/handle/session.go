@@ -36,7 +36,7 @@ func (x *Session) Login(ctx context.Context, request, reply proto.Message) error
 }
 
 func (x *Session) Push(ctx context.Context, message proto.Message) error {
-	if _, err := x.h.Push(ctx, message); err != nil {
+	if err := x.h.Push(ctx, message); err != nil {
 		return err
 	}
 	return nil
