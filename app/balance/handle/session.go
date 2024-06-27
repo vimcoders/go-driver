@@ -19,7 +19,7 @@ func (x *Session) Handle(ctx context.Context, request, reply proto.Message) erro
 	if len(x.Token) <= 0 {
 		return x.Login(ctx, request, reply)
 	}
-	if err := x.Call(context.Background(), request, reply, &pb.Option{Key: "token", Value: x.Token}); err != nil {
+	if err := x.Call(context.Background(), request, reply); err != nil {
 		return err
 	}
 	if err := x.Push(ctx, reply); err != nil {

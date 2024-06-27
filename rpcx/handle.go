@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"go-driver/log"
 	"go-driver/pb"
 	"net"
@@ -19,43 +20,23 @@ type Handle struct {
 	Handler  interface{} // handler to invoke, http.DefaultServeMux if nil
 	Buffsize uint16
 	Timeout  time.Duration
+	ProtoBuf
 }
 
 func (x *Handle) Register(handler interface{}) {
 	x.Handler = handler
+	x.ProtoBuf = messages
 	go x.Pull(context.Background())
 }
 
-func (x *Handle) ServeRPCX(w ResponsePusher, b []byte, opt Option) (err error) {
-	method := reflect.ValueOf(x.Handler).MethodByName(opt.Get(MESSAGENAME))
-	// if ok := method.IsNil(); ok {
-	// 	return fmt.Errorf("method.IsNil() %s", method)
-	// }
-	// if ok := method.IsZero(); ok {
-	// 	return errors.New("method.IsZero()")
-	// }
-	t := method.Type()
-	if t.NumIn() < 2 {
-		return errors.New("t.NumIn() < 2")
-	}
-	e := t.In(1).Elem()
-	in, ok := reflect.New(e).Interface().(proto.Message)
-	if !ok {
-		return errors.New("!ok")
-	}
-	if err := proto.Unmarshal(b, in); err != nil {
-		return err
-	}
+func (x *Handle) ServeRPCX(w ResponsePusher, in proto.Message) (err error) {
+	methodName := string(proto.MessageName(in).Name())
+	method := reflect.ValueOf(x.Handler).MethodByName(methodName)
 	values := method.Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.ValueOf(in)})
 	if len(values) <= 0 {
 		return errors.New("len(values) <= 0")
 	}
-	pusher := &Pusher{
-		Option:  opt,
-		Conn:    x.Conn,
-		Timeout: x.Timeout,
-	}
-	pusher.Push(context.Background(), values[0].Interface().(proto.Message))
+	w.Push(context.Background(), values[0].Interface().(proto.Message))
 	return nil
 }
 
@@ -83,16 +64,15 @@ func (x *Handle) Pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
+		request, err := x.ProtoBuf.Unmarshal(message)
+		if err != nil {
+			return err
+		}
 		pusher := &Pusher{
-			Option:  message.Option,
 			Conn:    x.Conn,
 			Timeout: x.Timeout,
 		}
-		if h, ok := x.Handler.(Handler); ok {
-			go h.ServeRPCX(pusher, message.Message, message.Option)
-			continue
-		}
-		go x.ServeRPCX(pusher, message.Message, message.Option)
+		x.ServeRPCX(pusher, request)
 	}
 }
 
@@ -105,21 +85,14 @@ func (x *Handle) Push(ctx context.Context, iMessage *pb.Message) error {
 }
 
 type Pusher struct {
-	Option
+	Message
 	net.Conn
 	Timeout time.Duration
+	ProtoBuf
 }
 
 func (x *Pusher) Push(ctx context.Context, iMessage proto.Message) error {
-	b, err := proto.Marshal(iMessage)
-	if err != nil {
-		return err
-	}
-	message := &pb.Message{
-		Message: b,
-	}
-	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: x.Get(MESSAGEID)})
-	response, err := encode(message)
+	response, err := x.Marshal(iMessage)
 	if err != nil {
 		return err
 	}
@@ -130,4 +103,14 @@ func (x *Pusher) Push(ctx context.Context, iMessage proto.Message) error {
 		return err
 	}
 	return nil
+}
+
+func (x *Pusher) Marshal(message proto.Message) ([]byte, error) {
+	for i := uint16(0); i < uint16(len(x.ProtoBuf)); i++ {
+		if proto.MessageName(message) != proto.MessageName(x.ProtoBuf[i]) {
+			continue
+		}
+		return encode(x.PackageNumber(), i, message)
+	}
+	return nil, fmt.Errorf("message %s not registered", proto.MessageName(message))
 }

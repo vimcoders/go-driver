@@ -1,71 +1,17 @@
 package handle
 
 import (
-	"errors"
-	"fmt"
-	"go-driver/driver"
 	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
 )
 
-type Message []proto.Message
-
-// 将一个来自底层的二进制流反序列化成一个对象
-func (x Message) Unmarshal(req []byte) (proto.Message, error) {
-	if len(req) < 2 {
-		return nil, errors.New("protobuf data too short")
-	}
-	var request Request = req
-	kind := request.Kind()
-	if kind >= uint16(len(x)) {
-		return nil, fmt.Errorf("message id %v not registered", kind)
-	}
-	message := x[kind].ProtoReflect().New().Interface()
-	if err := proto.Unmarshal(request.Message(), message); err != nil {
-		return nil, err
-	}
-	return message, nil
-}
-
-// 将一个对象序列化成一个二进制流
-func (x Message) Marshal(response proto.Message) ([]byte, error) {
-	for i := uint16(0); i < uint16(len(x)); i++ {
-		if proto.MessageName(response) != proto.MessageName(x[i]) {
-			continue
-		}
-		return encode(i, response)
-	}
-	return nil, fmt.Errorf("message %s not registered", proto.MessageName(response))
-}
-
-// 返回所有的协议号
-func (x Message) ToMessage() map[uint16]string {
-	m := make(map[uint16]string)
-	for i := uint16(0); i < uint16(len(messages)); i++ {
-		m[i] = string(proto.MessageName(messages[i]).Name())
-	}
-	return m
-}
-
 // 定义所有的协议号
-var messages = Message{
+var messages = []proto.Message{
 	&pb.PingRequest{},
 	&pb.PingResponse{},
 	&pb.LoginRequest{},
 	&pb.LoginResponse{},
-}
-
-func Marshal() driver.Marshal {
-	return messages
-}
-
-func Unmarshal() driver.Unmarshal {
-	return messages
-}
-
-func ToMessage() map[uint16]string {
-	return messages.ToMessage()
 }
 
 // func (x *Protobuf) Unmarshal(b []byte) (proto.Message, proto.Message, error) {

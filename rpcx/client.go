@@ -8,7 +8,6 @@ import (
 	"math"
 	"net"
 	"runtime/debug"
-	"strconv"
 	"sync"
 	"time"
 
@@ -18,26 +17,23 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	MESSAGEID   = "message_id"
-	MESSAGENAME = "message_name"
-)
-
 type Client struct {
 	w net.Conn
 	sync.RWMutex
-	messageId int32
-	pending   map[int32]chan *pb.Message
+	messageId uint32
+	pending   map[uint32]chan Message
 	Buffsize  uint16
 	Timeout   time.Duration
+	ProtoBuf
 }
 
 func NewClient(c net.Conn) *Client {
 	client := &Client{
 		w:        c,
-		pending:  make(map[int32]chan *pb.Message),
+		pending:  make(map[uint32]chan Message),
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
+		ProtoBuf: messages,
 	}
 	go client.Pull(context.Background())
 	go client.Keeplive(context.Background())
@@ -78,12 +74,7 @@ func (x *Client) Pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		var opt Option = message.Option
-		messageId, err := strconv.Atoi(opt.Get(MESSAGEID))
-		if err != nil {
-			return err
-		}
-		done := x.done(int32(messageId))
+		done := x.done(message.PackageNumber())
 		if done == nil {
 			continue
 		}
@@ -91,32 +82,14 @@ func (x *Client) Pull(ctx context.Context) (err error) {
 	}
 }
 
-func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Message, opt ...*pb.Option) (err error) {
+func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Message) (err error) {
 	defer func() {
 		if err != nil {
 			log.Error(err.Error())
 		}
 	}()
-	done, messageId := x.newPending()
-	if done == nil {
-		return errors.New("done == nil")
-	}
-	m, err := proto.Marshal(request)
+	done, messageId, err := x.Push(request)
 	if err != nil {
-		return err
-	}
-	message := &pb.Message{Message: m}
-	message.Option = append(message.Option, &pb.Option{Key: MESSAGEID, Value: fmt.Sprintf("%v", messageId)})
-	message.Option = append(message.Option, &pb.Option{Key: MESSAGENAME, Value: string(proto.MessageName(request).Name())})
-	message.Option = append(message.Option, opt...)
-	b, err := encode(message)
-	if err != nil {
-		return err
-	}
-	if err := x.w.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
-		return err
-	}
-	if _, err := x.w.Write(b); err != nil {
 		return err
 	}
 	select {
@@ -125,7 +98,7 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 		return errors.New("timeout")
 	case v := <-done:
 		close(done)
-		return proto.Unmarshal(v.Message, reply)
+		return proto.Unmarshal(v.Message(), reply)
 	}
 }
 
@@ -139,15 +112,36 @@ func (x *Client) Ping(ctx context.Context) (err error) {
 	return nil
 }
 
-func (x *Client) newPending() (chan *pb.Message, int32) {
+func (x *Client) Push(message proto.Message) (chan Message, uint32, error) {
+	for i := uint16(0); i < uint16(len(x.ProtoBuf)); i++ {
+		if proto.MessageName(message) != proto.MessageName(x.ProtoBuf[i]) {
+			continue
+		}
+		ch, messageId := x.newPending()
+		if ch == nil {
+			return nil, 0, errors.New("ch == nil")
+		}
+		b, err := encode(messageId, i, message)
+		if err != nil {
+			return nil, 0, err
+		}
+		if _, err := x.w.Write(b); err != nil {
+			return nil, 0, err
+		}
+		return ch, messageId, nil
+	}
+	return nil, 0, fmt.Errorf("message %s not registered", proto.MessageName(message))
+}
+
+func (x *Client) newPending() (chan Message, uint32) {
 	x.Lock()
 	defer x.Unlock()
-	for i := int32(1); i < math.MaxInt32; i++ {
+	for i := uint32(1); i < math.MaxInt32; i++ {
 		messageId := x.messageId + i
 		if _, ok := x.pending[messageId]; ok {
 			continue
 		}
-		done := make(chan *pb.Message, 1)
+		done := make(chan Message, 1)
 		x.pending[messageId] = done
 		x.messageId = x.messageId%math.MaxInt32 + 1
 		return done, messageId
@@ -155,7 +149,7 @@ func (x *Client) newPending() (chan *pb.Message, int32) {
 	return nil, 0
 }
 
-func (x *Client) done(messageId int32) chan *pb.Message {
+func (x *Client) done(messageId uint32) chan Message {
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[messageId]; ok {

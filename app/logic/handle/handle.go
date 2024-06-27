@@ -80,7 +80,7 @@ func (x *Handle) Close() error {
 	return nil
 }
 
-func (x *Handle) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Option) (err error) {
+func (x *Handle) ServeRPCX(w driver.ResponsePusher, in proto.Message) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Error(e)
@@ -92,29 +92,12 @@ func (x *Handle) ServeRPCX(w driver.ResponsePusher, request []byte, opt rpcx.Opt
 		}
 		x.Close()
 	}()
-	method := reflect.ValueOf(x).MethodByName(opt.Get(rpcx.MESSAGENAME))
-	t := method.Type()
-	if t.NumIn() < 2 {
-		return errors.New("t.NumIn() < 2")
-	}
-	e := t.In(1).Elem()
-	in, ok := reflect.New(e).Interface().(proto.Message)
-	if !ok {
-		return errors.New("!ok")
-	}
-	if err := proto.Unmarshal(request, in); err != nil {
-		return err
-	}
-	ctx := x.Authentication(opt)
-	if ctx == nil {
-		return errors.New("ctx == nil")
-	}
-	values := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(in)})
+	methodName := string(proto.MessageName(in).Name())
+	method := reflect.ValueOf(x).MethodByName(methodName)
+	values := method.Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.ValueOf(in)})
 	if len(values) <= 0 {
 		return errors.New("len(values) <= 0")
 	}
-	if err := w.Push(context.Background(), values[0].Interface().(proto.Message)); err != nil {
-		return err
-	}
+	w.Push(context.Background(), values[0].Interface().(proto.Message))
 	return nil
 }
