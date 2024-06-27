@@ -31,6 +31,16 @@ func NewHandle(w net.Conn) *Handle {
 	}
 }
 
+func (x *Handle) Register(ctx context.Context, h Handler, p ...proto.Message) error {
+	if len(x.probuf) > 0 {
+		return errors.New("len(x.probuf) > 0")
+	}
+	x.Handler = h
+	x.probuf = p
+	go x.Pull(ctx)
+	return nil
+}
+
 // 这个解析器将从这里开始工作
 func (x *Handle) Pull(ctx context.Context) (err error) {
 	defer func() {

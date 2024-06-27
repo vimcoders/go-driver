@@ -87,8 +87,7 @@ func (x *Client) Login() error {
 		return err
 	}
 	x.h = handle.NewHandle(conn)
-	//x.h.Handler = x
-	go x.h.Pull(context.Background())
+	x.h.Register(context.Background(), nil, driver.Messages...)
 	go x.Keeplive(context.Background())
 	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
 		log.Error(err.Error())

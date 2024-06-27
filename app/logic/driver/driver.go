@@ -7,3 +7,5 @@ import (
 
 type User = driver.User
 type ResponsePusher = driver.ResponsePusher
+
+var Messages = driver.Messages

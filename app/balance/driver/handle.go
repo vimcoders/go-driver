@@ -2,6 +2,7 @@
 package driver
 
 import (
+	"go-driver/driver"
 	"go-driver/handle"
 	"net"
 )
@@ -11,3 +12,5 @@ type Handle = handle.Handle
 func NewHandle(w net.Conn) *handle.Handle {
 	return handle.NewHandle(w)
 }
+
+var Messages = driver.Messages

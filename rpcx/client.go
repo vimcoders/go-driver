@@ -33,11 +33,18 @@ func NewClient(c net.Conn) *Client {
 		pending:  make(map[uint32]chan Message),
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
-		ProtoBuf: messages,
 	}
-	go client.Pull(context.Background())
-	go client.Keeplive(context.Background())
 	return client
+}
+
+func (x *Client) Register(ctx context.Context, p ...proto.Message) error {
+	if len(x.ProtoBuf) > 0 {
+		return errors.New("len(x.ProtoBuf)> 0")
+	}
+	x.ProtoBuf = p
+	go x.Pull(context.Background())
+	go x.Keeplive(context.Background())
+	return nil
 }
 
 func (x *Client) Keeplive(ctx context.Context) {

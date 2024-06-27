@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -76,12 +75,4 @@ func (x ProtoBuf) Unmarshal(req []byte) (proto.Message, error) {
 		return nil, err
 	}
 	return message, nil
-}
-
-// 定义所有的协议号
-var messages = ProtoBuf{
-	&pb.PingRequest{},
-	&pb.PingResponse{},
-	&pb.LoginRequest{},
-	&pb.LoginResponse{},
 }

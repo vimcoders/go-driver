@@ -61,7 +61,9 @@ func (x *Handle) DialLogic() error {
 			return err
 		}
 		log.Info(conn.RemoteAddr().String())
-		handler.c = rpcx.NewClient(conn)
+		cli := rpcx.NewClient(conn)
+		cli.Register(context.Background(), driver.Messages...)
+		x.c = cli
 	}
 	return nil
 }
@@ -72,8 +74,7 @@ func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 		Client: x.c,
 		h:      driver.NewHandle(c),
 	}
-	newSession.h.Handler = newSession
-	go newSession.h.Pull(ctx)
+	newSession.h.Register(ctx, newSession, driver.Messages...)
 }
 
 // Close stops handler

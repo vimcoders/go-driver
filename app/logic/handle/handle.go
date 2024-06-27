@@ -59,7 +59,7 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
 	}
-	handle.Register(x)
+	handle.Register(x, driver.Messages...)
 }
 
 func (x *Handle) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {

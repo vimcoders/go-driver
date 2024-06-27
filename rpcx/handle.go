@@ -23,10 +23,14 @@ type Handle struct {
 	ProtoBuf
 }
 
-func (x *Handle) Register(handler interface{}) {
+func (x *Handle) Register(handler interface{}, p ...proto.Message) error {
+	if len(x.ProtoBuf) > 0 {
+		return errors.New("len(x.ProtoBuf) > 0")
+	}
 	x.Handler = handler
-	x.ProtoBuf = messages
+	x.ProtoBuf = p
 	go x.Pull(context.Background())
+	return nil
 }
 
 func (x *Handle) ServeRPCX(w ResponsePusher, in proto.Message) (err error) {
