@@ -172,7 +172,7 @@ func (x *Client) newPending() (chan Message, uint32) {
 		}
 		done := make(chan Message, 1)
 		x.pending[messageId] = done
-		x.messageId = x.messageId%math.MaxUint16 + 1
+		x.messageId = messageId % math.MaxUint16
 		return done, messageId
 	}
 	return nil, 0
