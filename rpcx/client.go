@@ -123,10 +123,7 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 	}
 	select {
 	case <-ctx.Done():
-		done := x.done(messageId)
-		if done != nil {
-			close(done)
-		}
+		x.done(messageId)
 		return errors.New("timeout")
 	case v := <-done:
 		close(done)
