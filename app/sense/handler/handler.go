@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"net"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"go-driver/driver"
 	"go-driver/etcdx"
 	"go-driver/log"
-	"go-driver/quicx"
 	"go-driver/rpcx"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -48,20 +46,20 @@ func MakeHandler(opt conf.Conf) *Handler {
 		}
 	}
 	log.Info(service.Addr)
-	conn, err := quicx.Dial(service.Addr, &tls.Config{
-		InsecureSkipVerify: true,
-		NextProtos:         []string{"quic-echo-example"},
-		MaxVersion:         tls.VersionTLS13,
-	}, &quicx.Config{
-		MaxIdleTimeout: time.Minute,
-	})
-	if err != nil {
-		panic(err)
-	}
+	// conn, err := quicx.Dial(service.Addr, &tls.Config{
+	// 	InsecureSkipVerify: true,
+	// 	NextProtos:         []string{"quic-echo-example"},
+	// 	MaxVersion:         tls.VersionTLS13,
+	// }, &quicx.Config{
+	// 	MaxIdleTimeout: time.Minute,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 	//message := &driver.Protobuf{Messages: driver.Messages}
 	//handler.Marshal = message
 	//handler.Unmarshal = message
-	handler.iClient = rpcx.NewClient(conn)
+	//handler.iClient = rpcx.NewClient(conn)
 	return handler
 }
 

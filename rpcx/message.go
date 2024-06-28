@@ -2,8 +2,11 @@ package rpcx
 
 import (
 	"bufio"
+	"context"
 	"encoding/binary"
 	"fmt"
+	"net"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -31,19 +34,24 @@ func decode(b *bufio.Reader) (Message, error) {
 }
 
 // 数据流加密
-func encode(seqNumber uint32, kind uint16, message proto.Message) ([]byte, error) {
+func encode(seq, ack uint32, kind uint16, message proto.Message) ([]byte, error) {
 	b, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
 	}
-	var header [10]byte
+	var header [14]byte
 	binary.BigEndian.PutUint32(header[:], uint32(len(header)+len(b)))
-	binary.BigEndian.PutUint32(header[4:], seqNumber)
-	binary.BigEndian.PutUint16(header[8:], uint16(kind))
+	binary.BigEndian.PutUint32(header[4:], seq)
+	binary.BigEndian.PutUint32(header[8:], ack)
+	binary.BigEndian.PutUint16(header[12:], uint16(kind))
 	return append(header[:], b...), nil
 }
 
-func (x Message) SeqNumber() uint32 {
+func (x Message) seq() uint32 {
+	return binary.BigEndian.Uint32(x[4:])
+}
+
+func (x Message) ack() uint32 {
 	return binary.BigEndian.Uint32(x[4:])
 }
 
@@ -55,4 +63,37 @@ func (x Message) Kind() uint16 {
 // 从数据流中获取包体
 func (x Message) Message() []byte {
 	return x[10:]
+}
+
+type Pusher struct {
+	seq uint32
+	ack uint32
+	net.Conn
+	Timeout  time.Duration
+	messages []proto.Message
+}
+
+func (x *Pusher) push(_ context.Context, iMessage proto.Message) error {
+	response, err := x.marshal(iMessage)
+	if err != nil {
+		return err
+	}
+	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
+		return err
+	}
+	if _, err := x.Conn.Write(response); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (x *Pusher) marshal(message proto.Message) ([]byte, error) {
+	messageName := proto.MessageName(message).Name()
+	for i := uint16(0); i < uint16(len(x.messages)); i++ {
+		if messageName != proto.MessageName(x.messages[i]).Name() {
+			continue
+		}
+		return encode(x.seq, x.ack, i, message)
+	}
+	return nil, fmt.Errorf("message %s not registered", proto.MessageName(message))
 }

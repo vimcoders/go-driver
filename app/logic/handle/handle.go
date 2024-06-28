@@ -14,7 +14,6 @@ import (
 	"go-driver/log"
 	"go-driver/mongox"
 	"go-driver/pb"
-	"go-driver/rpcx"
 
 	etcd "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/proto"
@@ -54,12 +53,12 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	handle := &rpcx.Handle{
-		Conn:     conn,
-		Buffsize: 16 * 1024,
-		Timeout:  time.Second * 120,
-	}
-	handle.Register(x, driver.Messages...)
+	// handle := &rpcx.Handle{
+	// 	Conn:     conn,
+	// 	Buffsize: 16 * 1024,
+	// 	Timeout:  time.Second * 120,
+	// }
+	// handle.Register(x, driver.Messages...)
 }
 
 func (x *Handle) PingRequest(ctx *Context, req *pb.PingRequest) (*pb.PingResponse, error) {

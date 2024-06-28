@@ -61,9 +61,9 @@ func (x *Handle) DialLogic() error {
 			return err
 		}
 		log.Info(conn.RemoteAddr().String())
-		cli := rpcx.NewClient(conn)
-		cli.Register(context.Background(), driver.Messages...)
-		x.c = cli
+		// cli := rpcx.NewClient(conn)
+		// cli.Register(context.Background(), driver.Messages...)
+		// x.c = cli
 	}
 	return nil
 }
@@ -71,8 +71,8 @@ func (x *Handle) DialLogic() error {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		Client: x.c,
-		h:      driver.NewHandle(c),
+		//Client: x.c,
+		h: driver.NewHandle(c),
 	}
 	newSession.h.Register(ctx, newSession, driver.Messages...)
 }
