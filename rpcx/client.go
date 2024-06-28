@@ -112,11 +112,6 @@ func (x *Client) callback(ctx context.Context, response Message) error {
 }
 
 func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Message) (err error) {
-	defer func() {
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}()
 	for i := 0; i < math.MaxInt32; i++ {
 		done, messageId, err := x.Push(request)
 		if err != nil {
