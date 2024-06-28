@@ -83,11 +83,11 @@ func (x *Client) Pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		go x.handle(ctx, response)
+		go x.callback(ctx, response)
 	}
 }
 
-func (x *Client) handle(ctx context.Context, response Message) error {
+func (x *Client) callback(ctx context.Context, response Message) error {
 	seqNumber := response.SeqNumber()
 	if seqNumber == 0 {
 		var message pb.Message
@@ -117,18 +117,22 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 			log.Error(err.Error())
 		}
 	}()
-	done, messageId, err := x.Push(request)
-	if err != nil {
-		return err
+	for i := 0; i < math.MaxInt32; i++ {
+		done, messageId, err := x.Push(request)
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		select {
+		case <-ctx.Done():
+			x.done(messageId)
+			return errors.New("timeout")
+		case v := <-done:
+			close(done)
+			return proto.Unmarshal(v.Message(), reply)
+		}
 	}
-	select {
-	case <-ctx.Done():
-		x.done(messageId)
-		return errors.New("timeout")
-	case v := <-done:
-		close(done)
-		return proto.Unmarshal(v.Message(), reply)
-	}
+	return errors.New("try many request")
 }
 
 func (x *Client) Ping(ctx context.Context) (err error) {
@@ -166,14 +170,14 @@ func (x *Client) Push(message proto.Message) (chan Message, uint32, error) {
 func (x *Client) newPending() (chan Message, uint32) {
 	x.Lock()
 	defer x.Unlock()
-	for i := uint32(1); i < math.MaxInt32; i++ {
+	for i := uint32(1); i < math.MaxUint16; i++ {
 		messageId := x.messageId + i
 		if _, ok := x.pending[messageId]; ok {
 			continue
 		}
 		done := make(chan Message, 1)
 		x.pending[messageId] = done
-		x.messageId = x.messageId%math.MaxInt32 + 1
+		x.messageId = x.messageId%math.MaxUint16 + 1
 		return done, messageId
 	}
 	return nil, 0
