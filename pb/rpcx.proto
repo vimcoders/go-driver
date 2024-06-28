@@ -8,8 +8,7 @@ message Option {
 }
 
 message Message {
-	bytes Message = 1;
-	repeated Option Option = 2;
+	repeated string Messages = 1;
 }
 
 message PingRequest {

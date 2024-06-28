@@ -24,7 +24,7 @@ type Client struct {
 	pending   map[uint32]chan Message
 	Buffsize  uint16
 	Timeout   time.Duration
-	ProtoBuf
+	messages  []string
 }
 
 func NewClient(c net.Conn) *Client {
@@ -37,13 +37,15 @@ func NewClient(c net.Conn) *Client {
 	return client
 }
 
-func (x *Client) Register(ctx context.Context, p ...proto.Message) error {
-	if len(x.ProtoBuf) > 0 {
+func (x *Client) Register(ctx context.Context, messages ...proto.Message) error {
+	if len(x.messages) > 0 {
 		return errors.New("len(x.ProtoBuf)> 0")
 	}
-	x.ProtoBuf = p
-	go x.Pull(context.Background())
-	go x.Keeplive(context.Background())
+	for i := 0; i < len(messages); i++ {
+		x.messages = append(x.messages, string(proto.MessageName(messages[i]).Name()))
+	}
+	go x.Pull(ctx)
+	go x.Keeplive(ctx)
 	return nil
 }
 
@@ -77,15 +79,35 @@ func (x *Client) Pull(ctx context.Context) (err error) {
 		if err := x.w.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		message, err := decode(buffer)
+		response, err := decode(buffer)
 		if err != nil {
 			return err
 		}
-		done := x.done(message.PackageNumber())
-		if done == nil {
-			continue
+		go x.handle(ctx, response)
+	}
+}
+
+func (x *Client) handle(ctx context.Context, response Message) error {
+	seqNumber := response.SeqNumber()
+	if seqNumber == 0 {
+		var message pb.Message
+		if err := proto.Unmarshal(response.Message(), &message); err != nil {
+			return err
 		}
-		done <- message
+		x.messages = message.Messages
+		return nil
+	}
+	done := x.done(seqNumber)
+	if done == nil {
+		return errors.New("done == nil")
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	select {
+	case done <- response:
+		return nil
+	case <-timeoutCtx.Done():
+		return nil
 	}
 }
 
@@ -101,7 +123,10 @@ func (x *Client) Call(ctx context.Context, request proto.Message, reply proto.Me
 	}
 	select {
 	case <-ctx.Done():
-		x.done(messageId)
+		done := x.done(messageId)
+		if done != nil {
+			close(done)
+		}
 		return errors.New("timeout")
 	case v := <-done:
 		close(done)
@@ -120,8 +145,9 @@ func (x *Client) Ping(ctx context.Context) (err error) {
 }
 
 func (x *Client) Push(message proto.Message) (chan Message, uint32, error) {
-	for i := uint16(0); i < uint16(len(x.ProtoBuf)); i++ {
-		if proto.MessageName(message) != proto.MessageName(x.ProtoBuf[i]) {
+	messageName := string(proto.MessageName(message).Name())
+	for i := uint16(0); i < uint16(len(x.messages)); i++ {
+		if messageName != x.messages[i] {
 			continue
 		}
 		ch, messageId := x.newPending()
@@ -156,11 +182,11 @@ func (x *Client) newPending() (chan Message, uint32) {
 	return nil, 0
 }
 
-func (x *Client) done(messageId uint32) chan Message {
+func (x *Client) done(seqNumber uint32) chan Message {
 	x.Lock()
 	defer x.Unlock()
-	if v, ok := x.pending[messageId]; ok {
-		delete(x.pending, messageId)
+	if v, ok := x.pending[seqNumber]; ok {
+		delete(x.pending, seqNumber)
 		return v
 	}
 	return nil

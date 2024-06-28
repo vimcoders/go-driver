@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"go-driver/driver"
 	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/quicx"
@@ -25,6 +26,8 @@ import (
 	"github.com/smallnest/rpcx/server"
 	"google.golang.org/protobuf/proto"
 )
+
+type ResponsePusher = driver.ResponsePusher
 
 type Handler struct {
 }
@@ -42,6 +45,10 @@ func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 		Timeout:  time.Second * 120,
 	}
 	handle.Register(x)
+}
+
+func (x *Handler) ServeRPCX(w ResponsePusher, req proto.Message) error {
+	return nil
 }
 
 func (x *Handler) PingRequest(ctx context.Context, request *pb.PingRequest) (proto.Message, error) {

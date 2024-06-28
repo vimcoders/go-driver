@@ -9,5 +9,5 @@ import (
 type ResponsePusher = driver.ResponsePusher
 
 type Handler interface {
-	ServeRPCX(ResponsePusher, request proto.Message) error
+	ServeRPCX(ResponsePusher, proto.Message) error
 }
