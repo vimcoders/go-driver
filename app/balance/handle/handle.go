@@ -10,6 +10,7 @@ import (
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
+	"go-driver/pb"
 	"go-driver/quicx"
 	"go-driver/rpcx"
 
@@ -19,7 +20,7 @@ import (
 var handler = &Handle{}
 
 type Handle struct {
-	c *rpcx.Client
+	c rpcx.Client
 	*etcd.Client
 	*conf.Conf
 }
@@ -61,18 +62,24 @@ func (x *Handle) DialLogic() error {
 			return err
 		}
 		log.Info(conn.RemoteAddr().String())
-		// cli := rpcx.NewClient(conn)
-		// cli.Register(context.Background(), driver.Messages...)
-		// x.c = cli
+		cli := rpcx.NewClient(conn)
+		cli.Register(x)
+		go cli.Keeplive(context.Background())
+		x.c = cli
 	}
 	return nil
+}
+
+func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+	log.Debug("ping")
+	return &pb.PingResponse{}, nil
 }
 
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		//Client: x.c,
-		h: driver.NewHandle(c),
+		Client: x.c,
+		h:      driver.NewHandle(c),
 	}
 	newSession.h.Register(ctx, newSession, driver.Messages...)
 }

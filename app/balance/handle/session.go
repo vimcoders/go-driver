@@ -3,13 +3,14 @@ package handle
 import (
 	"context"
 	"go-driver/app/balance/driver"
+	"go-driver/rpcx"
 
 	"google.golang.org/protobuf/proto"
 )
 
 type Session struct {
 	h *driver.Handle
-	//*rpcx.Client
+	rpcx.Client
 	Token string
 }
 

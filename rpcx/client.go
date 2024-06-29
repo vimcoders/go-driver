@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"net"
+	"reflect"
 	"sync"
 	"time"
 
@@ -26,7 +27,7 @@ type XClient struct {
 	messages  []proto.Message
 }
 
-func NewClient(c net.Conn) *XClient {
+func NewClient(c net.Conn) Client {
 	x := &XClient{
 		Conn:     c,
 		pending:  make(map[uint32]chan Message),
@@ -34,14 +35,18 @@ func NewClient(c net.Conn) *XClient {
 		Timeout:  time.Second * 120,
 		messages: messages,
 	}
-	go x.pull(context.Background())
 	return x
+}
+
+func (x *XClient) Register(h Handler) {
+	x.Handler = h
+	go x.pull(context.Background())
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
-		if err := x.ping(ctx); err != nil {
+		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
 			return err
 		}
@@ -49,7 +54,7 @@ func (x *XClient) Keeplive(ctx context.Context) error {
 	return nil
 }
 
-func (x *XClient) ping(ctx context.Context) (err error) {
+func (x *XClient) Ping(ctx context.Context) error {
 	if err := x.Go(ctx, &pb.PingRequest{}); err != nil {
 		return err
 	}
@@ -65,7 +70,7 @@ func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.M
 		}
 		pusher := &Pusher{
 			Conn:     x.Conn,
-			Timeout:  x.Timeout,
+			timeout:  x.Timeout,
 			messages: x.messages,
 			seq:      messageId,
 		}
@@ -88,7 +93,7 @@ func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.M
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
 	pusher := &Pusher{
 		Conn:     x.Conn,
-		Timeout:  x.Timeout,
+		timeout:  x.Timeout,
 		messages: x.messages,
 		seq:      math.MaxUint32,
 	}
@@ -148,11 +153,54 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 	}
 }
 
-func (x *XClient) handleCall(_ context.Context, _ Message) error {
-	return nil
+func (x *XClient) unmarshal(message Message) (proto.Message, error) {
+	kind := message.Kind()
+	if kind >= uint16(len(x.messages)) {
+		return nil, errors.New("kind >= uint16(len(x.messages))")
+	}
+	newMessage := x.messages[kind].ProtoReflect().New().Interface()
+	if err := proto.Unmarshal(message.Message(), newMessage); err != nil {
+		return nil, err
+	}
+	return newMessage, nil
 }
 
-func (x *XClient) handleCast(_ context.Context, _ Message) error {
+func (x *XClient) handleCall(ctx context.Context, message Message) error {
+	req, err := x.unmarshal(message)
+	if err != nil {
+		return err
+	}
+	methodName := proto.MessageName(req).Name()
+	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return errors.New("method.IsValid(); !ok")
+	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(req)}
+	result := method.Call(args)
+	if len(result) <= 0 {
+		return errors.New("len(result) <= 0")
+	}
+	pusher := &Pusher{
+		Conn:     x.Conn,
+		timeout:  x.Timeout,
+		messages: x.messages,
+		ack:      message.seq(),
+	}
+	return pusher.push(ctx, result[0].Interface().(proto.Message))
+}
+
+func (x *XClient) handleCast(ctx context.Context, message Message) error {
+	req, err := x.unmarshal(message)
+	if err != nil {
+		return err
+	}
+	methodName := proto.MessageName(req).Name()
+	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return errors.New("method.IsValid(); !ok")
+	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(req)}
+	method.Call(args)
 	return nil
 }
 

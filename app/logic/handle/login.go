@@ -1,18 +1,16 @@
 package handle
 
 import (
+	"context"
 	"net/http"
 
 	"go-driver/driver"
-	"go-driver/log"
 	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
 )
 
-func (x *Handle) LoginRequest(ctx *Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	//ctx.Insert()
-	log.Debug(req)
+func (x *Handle) LoginRequest(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	return &pb.LoginResponse{Code: http.StatusOK}, nil
 }
 

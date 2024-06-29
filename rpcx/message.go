@@ -34,7 +34,7 @@ func decode(b *bufio.Reader) (Message, error) {
 }
 
 // 数据流加密
-func encode(seq, ack uint32, kind uint16, message proto.Message) ([]byte, error) {
+func encode(seq, ack uint32, kind uint16, message proto.Message) (Message, error) {
 	b, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
@@ -52,24 +52,24 @@ func (x Message) seq() uint32 {
 }
 
 func (x Message) ack() uint32 {
-	return binary.BigEndian.Uint32(x[4:])
+	return binary.BigEndian.Uint32(x[8:])
 }
 
 // 从数据流中获取协议号
 func (x Message) Kind() uint16 {
-	return binary.BigEndian.Uint16(x[8:])
+	return binary.BigEndian.Uint16(x[12:])
 }
 
 // 从数据流中获取包体
 func (x Message) Message() []byte {
-	return x[10:]
+	return x[14:]
 }
 
 type Pusher struct {
 	seq uint32
 	ack uint32
 	net.Conn
-	Timeout  time.Duration
+	timeout  time.Duration
 	messages []proto.Message
 }
 
@@ -78,7 +78,7 @@ func (x *Pusher) push(_ context.Context, iMessage proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
+	if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
 		return err
 	}
 	if _, err := x.Conn.Write(response); err != nil {
