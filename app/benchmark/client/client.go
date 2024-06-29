@@ -6,14 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-driver/driver"
-	"go-driver/handle"
 	"go-driver/log"
 	"go-driver/pb"
+	"go-driver/tcp"
 	"io"
 	"math/rand"
 	"net"
 	"net/http"
-	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -26,12 +25,10 @@ type ResponseWriter[T any] struct {
 }
 
 type Client struct {
-	Url      string
-	CometUrl string
-	h        *handle.Handle
-	driver.Marshal
-	driver.Unmarshal
-	Token string
+	Url       string
+	CometUrl  string
+	Token     string
+	tcpclient tcp.Client
 }
 
 func (x *Client) Register() error {
@@ -83,60 +80,14 @@ func (x *Client) Login() error {
 	// 	log.Error(err.Error())
 	// 	return err
 	// }
+	x.tcpclient = tcp.NewClient(conn)
 	if err := x.Register(); err != nil {
 		return err
 	}
-	x.h = handle.NewHandle(conn)
-	x.h.Register(context.Background(), nil, driver.Messages...)
-	go x.Keeplive(context.Background())
-	if err := x.Push(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
-		log.Error(err.Error())
-		return err
-	}
+	x.tcpclient.Go(context.Background(), &pb.LoginRequest{Token: x.Token})
 	return nil
 }
 
-func (x *Client) LoginResponse(response *pb.LoginResponse) {
-
-}
-
-func (x *Client) Handle(ctx context.Context, request, reply proto.Message) error {
-	// message, _, err := x.Unmarshal.Unmarshal(request)
-	// if err != nil {
-	// 	log.Error(err.Error())
-	// 	return
-	// }
-	// method := reflect.ValueOf(x).MethodByName(string(proto.MessageName(message).Name()))
-	// method.Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.ValueOf(message)})
-	return nil
-}
-
-func (x *Client) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		if err := x.Ping(ctx); err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	}
-	return nil
-}
-
-func (x *Client) Ping(ctx context.Context) (err error) {
-	defer func() {
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}()
-	if err := x.Push(ctx, &pb.PingRequest{}); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (x *Client) Push(ctx context.Context, message proto.Message) error {
-	if err := x.h.Push(ctx, message); err != nil {
-		return err
-	}
+func (x *Client) Handle(ctx context.Context, reply proto.Message) error {
 	return nil
 }

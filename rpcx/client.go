@@ -17,7 +17,7 @@ import (
 )
 
 type XClient struct {
-	Handler
+	Handler interface{}
 	net.Conn
 	sync.RWMutex
 	messageId uint32
@@ -40,7 +40,7 @@ func NewClient(c net.Conn, seq uint16) Client {
 	return x
 }
 
-func (x *XClient) Register(h Handler) {
+func (x *XClient) Register(h interface{}) {
 	if x.Handler != nil {
 		return
 	}

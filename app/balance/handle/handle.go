@@ -6,13 +6,13 @@ import (
 	"net"
 	"time"
 
-	"go-driver/app/balance/driver"
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/quicx"
 	"go-driver/rpcx"
+	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )
@@ -20,7 +20,7 @@ import (
 var handler = &Handle{}
 
 type Handle struct {
-	c rpcx.Client
+	rpcclient rpcx.Client
 	*etcd.Client
 	*conf.Conf
 }
@@ -66,7 +66,7 @@ func (x *Handle) DialLogic() error {
 		cli := rpcx.NewClient(conn, 1)
 		cli.Register(x)
 		go cli.Keeplive(context.Background())
-		x.c = cli
+		x.rpcclient = cli
 		return nil
 	}
 	return nil
@@ -80,10 +80,10 @@ func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.Ping
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		Client: x.c,
-		h:      driver.NewHandle(c),
+		tcpclient: tcp.NewClient(c),
+		rpcclient: x.rpcclient,
 	}
-	newSession.h.Register(ctx, newSession, driver.Messages...)
+	newSession.tcpclient.Register(newSession)
 }
 
 // Close stops handler

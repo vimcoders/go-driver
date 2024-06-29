@@ -1,0 +1,137 @@
+package tcp
+
+import (
+	"bufio"
+	"context"
+	"errors"
+	"go-driver/log"
+	"go-driver/pb"
+	"net"
+	"sync"
+	"time"
+
+	"google.golang.org/protobuf/proto"
+)
+
+type XClient struct {
+	Handler interface{}
+	net.Conn
+	sync.RWMutex
+	Buffsize uint16
+	Timeout  time.Duration
+	messages []proto.Message
+}
+
+func NewClient(c net.Conn) Client {
+	x := &XClient{
+		Conn:     c,
+		Buffsize: 16 * 1024,
+		Timeout:  time.Second * 240,
+		messages: messages,
+	}
+	return x
+}
+
+func (x *XClient) Register(h interface{}) {
+	if x.Handler != nil {
+		return
+	}
+	x.Handler = h
+	go x.pull(context.Background())
+}
+
+func (x *XClient) Keeplive(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
+		if err := x.Ping(ctx); err != nil {
+			log.Error(err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
+func (x *XClient) Ping(ctx context.Context) error {
+	if err := x.Go(ctx, &pb.PingRequest{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.Message) (err error) {
+	return errors.New("try many request")
+}
+
+func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
+	pusher := &Pusher{
+		Conn:     x.Conn,
+		timeout:  x.Timeout,
+		messages: x.messages,
+	}
+	return pusher.push(context.Background(), request)
+}
+
+func (x *XClient) Close() error {
+	return x.Conn.Close()
+}
+
+func (x *XClient) pull(ctx context.Context) (err error) {
+	defer func() {
+		if err != nil {
+			log.Error(err.Error())
+		}
+		if err := x.Close(); err != nil {
+			log.Error(err.Error())
+		}
+	}()
+	buffer := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.New("shutdown")
+		default:
+		}
+		if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
+			return err
+		}
+		message, err := decode(buffer)
+		if err != nil {
+			return err
+		}
+		go x.handle(ctx, message)
+	}
+}
+
+func (x *XClient) handle(ctx context.Context, message Message) error {
+	req, err := x.new(message.kind())
+	if err != nil {
+		return err
+	}
+	if err := proto.Unmarshal(message.message(), req); err != nil {
+		return err
+	}
+	if h, ok := x.Handler.(CHandler); ok {
+		if err := h.Handle(ctx, req); err != nil {
+			return err
+		}
+		return nil
+	}
+	if h, ok := x.Handler.(SHandler); ok {
+		reply, err := x.new(message.reply())
+		if err != nil {
+			return err
+		}
+		if err := h.Handle(ctx, req, reply); err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
+
+func (x *XClient) new(kind uint16) (proto.Message, error) {
+	if kind >= uint16(len(x.messages)) {
+		return nil, errors.New("kind >= uint16(len(x.messages))")
+	}
+	return x.messages[kind].ProtoReflect().New().Interface(), nil
+}
