@@ -41,6 +41,9 @@ func NewClient(c net.Conn, seq uint16) Client {
 }
 
 func (x *XClient) Register(h Handler) {
+	if x.Handler != nil {
+		return
+	}
 	x.Handler = h
 	go x.pull(context.Background())
 }
