@@ -33,7 +33,7 @@ func NewClient(c net.Conn, seq uint16) Client {
 		Conn:     c,
 		pending:  make(map[uint32]chan Message),
 		Buffsize: 16 * 1024,
-		Timeout:  time.Second * 120,
+		Timeout:  time.Second * 240,
 		messages: messages,
 		seq:      seq,
 	}
@@ -46,7 +46,7 @@ func (x *XClient) Register(h Handler) {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 60)
+	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
@@ -225,7 +225,6 @@ func (x *XClient) addCall() (chan Message, uint32, error) {
 }
 
 func (x *XClient) done(seq uint32) chan Message {
-	log.Debug(seq)
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[seq]; ok {
