@@ -15,6 +15,7 @@ import (
 	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
+	"google.golang.org/protobuf/proto"
 )
 
 var handler = &Handle{}
@@ -64,7 +65,10 @@ func (x *Handle) DialLogic() error {
 		}
 		log.Info(conn.RemoteAddr().String())
 		cli := rpcx.NewClient(conn, 1)
-		cli.Register(x)
+		if err := cli.Register(x); err != nil {
+			log.Error(err.Error())
+			continue
+		}
 		go cli.Keeplive(context.Background())
 		x.rpcclient = cli
 		return nil
@@ -75,6 +79,14 @@ func (x *Handle) DialLogic() error {
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	log.Debug("ping")
 	return &pb.PingResponse{}, nil
+}
+
+func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {
+	return nil, nil
+}
+
+func (x *Handle) Go(ctx context.Context, message proto.Message) error {
+	return nil
 }
 
 // Handle receives and executes redis commands

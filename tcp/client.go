@@ -32,12 +32,13 @@ func NewClient(c net.Conn) Client {
 	return x
 }
 
-func (x *XClient) Register(h interface{}) {
+func (x *XClient) Register(h interface{}) error {
 	if x.Handler != nil {
-		return
+		return errors.New("x.Handler != nil")
 	}
 	x.Handler = h
 	go x.pull(context.Background())
+	return nil
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {

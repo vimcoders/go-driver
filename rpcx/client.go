@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math"
 	"net"
-	"reflect"
 	"sync"
 	"time"
 
@@ -17,7 +16,7 @@ import (
 )
 
 type XClient struct {
-	Handler interface{}
+	Handler Handler
 	net.Conn
 	sync.RWMutex
 	messageId uint32
@@ -40,12 +39,17 @@ func NewClient(c net.Conn, seq uint16) Client {
 	return x
 }
 
-func (x *XClient) Register(h interface{}) {
+func (x *XClient) Register(h interface{}) error {
 	if x.Handler != nil {
-		return
+		return errors.New("x.Handler != nil")
 	}
-	x.Handler = h
+	handler, ok := h.(Handler)
+	if !ok {
+		return errors.New("Handler !ok")
+	}
+	x.Handler = handler
 	go x.pull(context.Background())
+	return nil
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
@@ -173,15 +177,15 @@ func (x *XClient) new(kind uint16) (proto.Message, error) {
 }
 
 func (x *XClient) serveCall(ctx context.Context, seq uint32, message proto.Message) error {
-	methodName := proto.MessageName(message).Name()
-	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
-	if ok := method.IsValid(); !ok {
-		return errors.New("method.IsValid(); !ok")
-	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	result := method.Call(args)
-	if len(result) <= 0 {
-		return errors.New("len(result) <= 0")
+	// methodName := proto.MessageName(message).Name()
+	// method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
+	// if ok := method.IsValid(); !ok {
+	// 	return errors.New("method.IsValid(); !ok")
+	// }
+	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	result, err := x.Handler.Call(ctx, message)
+	if err != nil {
+		return err
 	}
 	pusher := &Pusher{
 		Conn:     x.Conn,
@@ -189,18 +193,11 @@ func (x *XClient) serveCall(ctx context.Context, seq uint32, message proto.Messa
 		messages: x.messages,
 		ack:      seq,
 	}
-	return pusher.push(ctx, result[0].Interface().(proto.Message))
+	return pusher.push(ctx, result)
 }
 
 func (x *XClient) serveCast(ctx context.Context, message proto.Message) error {
-	methodName := proto.MessageName(message).Name()
-	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
-	if ok := method.IsValid(); !ok {
-		return errors.New("method.IsValid(); !ok")
-	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	method.Call(args)
-	return nil
+	return x.Handler.Go(ctx, message)
 }
 
 func (x *XClient) addCall() (chan proto.Message, uint32, error) {

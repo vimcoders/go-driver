@@ -56,13 +56,40 @@ func MakeHandler(opt *conf.Conf) *Handle {
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
 	cli := rpcx.NewClient(conn, math.MaxUint16)
-	cli.Register(x)
+	if err := cli.Register(x); err != nil {
+		log.Error(err.Error())
+	}
 	//go cli.Keeplive(context.Background())
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	log.Debug("PingRequest")
 	return &pb.PingResponse{}, nil
+}
+
+func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {
+	methodName := proto.MessageName(message).Name()
+	method := reflect.ValueOf(x).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return nil, errors.New("method.IsValid(); !ok")
+	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	result := method.Call(args)
+	if len(result) <= 0 {
+		return nil, errors.New("len(result) <= 0")
+	}
+	return result[0].Interface().(proto.Message), nil
+}
+
+func (x *Handle) Go(ctx context.Context, message proto.Message) error {
+	methodName := proto.MessageName(message).Name()
+	method := reflect.ValueOf(x).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return errors.New("method.IsValid(); !ok")
+	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	method.Call(args)
+	return nil
 }
 
 // Close stops handler

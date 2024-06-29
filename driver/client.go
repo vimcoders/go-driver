@@ -13,6 +13,6 @@ type Client interface {
 	Close() error
 	RemoteAddr() net.Addr
 	Ping(ctx context.Context) (err error)
-	Register(interface{})
+	Register(interface{}) error
 	Keeplive(ctx context.Context) error
 }
