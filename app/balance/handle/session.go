@@ -16,25 +16,11 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
-	if len(x.Token) <= 0 {
-		return x.Login(ctx, request)
-	}
 	reply, err := x.rpcclient.Call(context.Background(), request)
 	if err != nil {
 		return err
 	}
-	if err := x.tcpclient.Go(ctx, reply); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (x *Session) Login(ctx context.Context, request proto.Message) error {
-	reply, err := x.rpcclient.Call(context.Background(), request)
-	if err != nil {
-		return err
-	}
-	if loginRequest, ok := request.(*pb.LoginRequest); ok {
+	if loginRequest, ok := request.(*pb.LoginRequest); ok && len(x.Token) <= 0 {
 		x.Token = loginRequest.Token
 	}
 	if err := x.tcpclient.Go(ctx, reply); err != nil {
