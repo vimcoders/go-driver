@@ -21,7 +21,7 @@ type XClient struct {
 	net.Conn
 	sync.RWMutex
 	messageId uint32
-	pending   map[uint32]chan Message
+	pending   map[uint32]chan proto.Message
 	Buffsize  uint16
 	Timeout   time.Duration
 	messages  []proto.Message
@@ -31,7 +31,7 @@ type XClient struct {
 func NewClient(c net.Conn, seq uint16) Client {
 	x := &XClient{
 		Conn:     c,
-		pending:  make(map[uint32]chan Message),
+		pending:  make(map[uint32]chan proto.Message),
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 240,
 		messages: messages,
@@ -60,14 +60,13 @@ func (x *XClient) Keeplive(ctx context.Context) error {
 }
 
 func (x *XClient) Ping(ctx context.Context) error {
-	var reply pb.PingResponse
-	if err := x.Call(ctx, &pb.PingRequest{}, &reply); err != nil {
+	if _, err := x.Call(ctx, &pb.PingRequest{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.Message) (err error) {
+func (x *XClient) Call(ctx context.Context, request proto.Message) (reply proto.Message, err error) {
 	for i := 0; i < math.MaxInt32; i++ {
 		call, messageId, err := x.addCall()
 		if err != nil {
@@ -82,18 +81,18 @@ func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.M
 		}
 		if err := pusher.push(context.Background(), request); err != nil {
 			x.done(messageId)
-			return err
+			return nil, err
 		}
 		select {
 		case <-ctx.Done():
 			x.done(messageId)
-			return errors.New("timeout")
+			return nil, errors.New("timeout")
 		case message := <-call:
 			close(call)
-			return proto.Unmarshal(message.message(), reply)
+			return message, nil
 		}
 	}
-	return errors.New("try many request")
+	return nil, errors.New("try many request")
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
@@ -138,12 +137,19 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 }
 
 func (x *XClient) handle(ctx context.Context, message Message) error {
+	response, err := x.new(message.kind())
+	if err != nil {
+		return err
+	}
+	if err := proto.Unmarshal(message.message(), response); err != nil {
+		return err
+	}
 	seq, ack := message.seq(), message.ack()
 	if seq == math.MaxUint32 {
-		return x.handleCast(ctx, message)
+		return x.serveCast(ctx, response)
 	}
 	if seq > 0 {
-		return x.handleCall(ctx, message)
+		return x.serveCall(ctx, seq, response)
 	}
 	call := x.done(ack)
 	if call == nil {
@@ -152,7 +158,7 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	select {
-	case call <- message:
+	case call <- response:
 		return nil
 	case <-timeoutCtx.Done():
 		return nil
@@ -166,20 +172,13 @@ func (x *XClient) new(kind uint16) (proto.Message, error) {
 	return x.messages[kind].ProtoReflect().New().Interface(), nil
 }
 
-func (x *XClient) handleCall(ctx context.Context, message Message) error {
-	req, err := x.new(message.kind())
-	if err != nil {
-		return err
-	}
-	if err := proto.Unmarshal(message.message(), req); err != nil {
-		return err
-	}
-	methodName := proto.MessageName(req).Name()
+func (x *XClient) serveCall(ctx context.Context, seq uint32, message proto.Message) error {
+	methodName := proto.MessageName(message).Name()
 	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
 	if ok := method.IsValid(); !ok {
 		return errors.New("method.IsValid(); !ok")
 	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(req)}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
 	result := method.Call(args)
 	if len(result) <= 0 {
 		return errors.New("len(result) <= 0")
@@ -188,30 +187,23 @@ func (x *XClient) handleCall(ctx context.Context, message Message) error {
 		Conn:     x.Conn,
 		timeout:  x.Timeout,
 		messages: x.messages,
-		ack:      message.seq(),
+		ack:      seq,
 	}
 	return pusher.push(ctx, result[0].Interface().(proto.Message))
 }
 
-func (x *XClient) handleCast(ctx context.Context, message Message) error {
-	req, err := x.new(message.kind())
-	if err != nil {
-		return err
-	}
-	if err := proto.Unmarshal(message.message(), req); err != nil {
-		return err
-	}
-	methodName := proto.MessageName(req).Name()
+func (x *XClient) serveCast(ctx context.Context, message proto.Message) error {
+	methodName := proto.MessageName(message).Name()
 	method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
 	if ok := method.IsValid(); !ok {
 		return errors.New("method.IsValid(); !ok")
 	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(req)}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
 	method.Call(args)
 	return nil
 }
 
-func (x *XClient) addCall() (chan Message, uint32, error) {
+func (x *XClient) addCall() (chan proto.Message, uint32, error) {
 	x.Lock()
 	defer x.Unlock()
 	limit := uint32(math.MaxUint16) + uint32(x.seq)
@@ -220,7 +212,7 @@ func (x *XClient) addCall() (chan Message, uint32, error) {
 		if _, ok := x.pending[messageId]; ok {
 			continue
 		}
-		done := make(chan Message, 1)
+		done := make(chan proto.Message, 1)
 		x.pending[messageId] = done
 		x.messageId = messageId % math.MaxUint16
 		return done, messageId, nil
@@ -228,7 +220,7 @@ func (x *XClient) addCall() (chan Message, uint32, error) {
 	return nil, 0, errors.New("too many request")
 }
 
-func (x *XClient) done(seq uint32) chan Message {
+func (x *XClient) done(seq uint32) chan proto.Message {
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[seq]; ok {

@@ -58,8 +58,8 @@ func (x *XClient) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.Message) (err error) {
-	return errors.New("try many request")
+func (x *XClient) Call(ctx context.Context, request proto.Message) (reply proto.Message, err error) {
+	return nil, errors.New("try many request")
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
@@ -115,18 +115,8 @@ func (x *XClient) handle(ctx context.Context, message Message) (err error) {
 	if err := proto.Unmarshal(message.message(), req); err != nil {
 		return err
 	}
-	if h, ok := x.Handler.(CHandler); ok {
+	if h, ok := x.Handler.(Handler); ok {
 		if err := h.ServeTCP(ctx, req); err != nil {
-			return err
-		}
-		return nil
-	}
-	if h, ok := x.Handler.(SHandler); ok {
-		reply, err := x.new(message.reply())
-		if err != nil {
-			return err
-		}
-		if err := h.ServeTCP(ctx, req, reply); err != nil {
 			return err
 		}
 		return nil

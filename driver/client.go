@@ -8,7 +8,7 @@ import (
 )
 
 type Client interface {
-	Call(context.Context, proto.Message, proto.Message) error
+	Call(context.Context, proto.Message) (proto.Message, error)
 	Go(context.Context, proto.Message) error
 	Close() error
 	RemoteAddr() net.Addr
