@@ -15,7 +15,7 @@ type Session struct {
 	Token     string
 }
 
-func (x *Session) Handle(ctx context.Context, request, reply proto.Message) error {
+func (x *Session) ServeTCP(ctx context.Context, request, reply proto.Message) error {
 	if len(x.Token) <= 0 {
 		return x.Login(ctx, request, reply)
 	}
