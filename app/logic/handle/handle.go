@@ -6,7 +6,6 @@ import (
 	"math"
 	"net"
 	"reflect"
-	"runtime/debug"
 	"sync"
 	"time"
 
@@ -26,12 +25,12 @@ var handler = &Handle{}
 type Handle struct {
 	*mongox.Mongo
 	*etcd.Client
-	sync.RWMutex
 	Users []*driver.User
 	Opt   *conf.Conf
 	total uint64
 	unix  int64
 	c     rpcx.Client
+	sync.RWMutex
 }
 
 // MakeHandler creates a Handler instance
@@ -69,11 +68,13 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	x.Lock()
-	defer x.Unlock()
+	x.c.Go(ctx, &pb.PingResponse{})
+	unix := time.Now().Unix()
 	x.total++
-	if x.total%500000 == 0 {
-		log.Debug("PingRequest", x.total)
+	if unix != x.unix {
+		log.Debug(x.total, " request/s")
+		x.total = 0
+		x.unix = unix
 	}
 	return &pb.PingResponse{}, nil
 }
@@ -93,23 +94,13 @@ func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message
 }
 
 func (x *Handle) Go(ctx context.Context, message proto.Message) error {
-	// methodName := proto.MessageName(message).Name()
-	// method := reflect.ValueOf(x).MethodByName(string(methodName))
-	// if ok := method.IsValid(); !ok {
-	// 	return errors.New("method.IsValid(); !ok")
-	// }
-	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	// method.Call(args)
-	x.c.Go(ctx, &pb.PingResponse{})
-	x.Lock()
-	defer x.Unlock()
-	unix := time.Now().Unix()
-	x.total++
-	if unix != x.unix {
-		log.Debug(x.total, " request/s")
-		x.total = 0
-		x.unix = unix
+	methodName := proto.MessageName(message).Name()
+	method := reflect.ValueOf(x).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return errors.New("method.IsValid(); !ok")
 	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	method.Call(args)
 	return nil
 }
 
@@ -119,27 +110,5 @@ func (x *Handle) Close() error {
 		// x.Mongo.Insert(x.Users[i])
 		// x.Mongo.Update(x.Users[i])
 	}
-	return nil
-}
-
-func (x *Handle) ServeRPCX(w driver.ResponsePusher, in proto.Message) (err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			log.Error(e)
-			debug.PrintStack()
-		}
-		if err != nil {
-			log.Error(err.Error())
-			debug.PrintStack()
-		}
-		x.Close()
-	}()
-	methodName := string(proto.MessageName(in).Name())
-	method := reflect.ValueOf(x).MethodByName(methodName)
-	values := method.Call([]reflect.Value{reflect.ValueOf(context.Background()), reflect.ValueOf(in)})
-	if len(values) <= 0 {
-		return errors.New("len(values) <= 0")
-	}
-	w.Push(context.Background(), values[0].Interface().(proto.Message))
 	return nil
 }

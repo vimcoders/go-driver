@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"flag"
 	"math/big"
+	"net"
 	"os"
 	"os/signal"
 	"runtime"
@@ -21,7 +22,6 @@ import (
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
-	"go-driver/quicx"
 	"go-driver/rpcx"
 
 	"github.com/google/uuid"
@@ -44,21 +44,21 @@ func main() {
 	log.Info("Unmarshal YAML DOWN")
 	handler := handle.MakeHandler(&opt)
 	defer handler.Close()
-	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Info("MakeHandler DOWN")
-	// listener, err := net.ListenTCP("tcp", addr)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
-		MaxIdleTimeout: time.Minute,
-	})
+	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	if err != nil {
 		panic(err)
 	}
+	log.Info("MakeHandler DOWN")
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
+	// 	MaxIdleTimeout: time.Minute,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 	service := etcdx.Service{
 		Kind: "QUIC",
 		Addr: opt.Addr.String(),

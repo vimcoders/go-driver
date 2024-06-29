@@ -2,16 +2,13 @@ package handle
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
-	"sync"
 	"time"
 
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/quicx"
 	"go-driver/rpcx"
 	"go-driver/tcp"
 
@@ -25,7 +22,6 @@ type Handle struct {
 	rpcclient rpcx.Client
 	*etcd.Client
 	*conf.Conf
-	sync.RWMutex
 	total uint64
 	unix  int64
 }
@@ -55,14 +51,14 @@ func (x *Handle) DialLogic() error {
 	}
 	for i := 0; i < len(response); i++ {
 		log.Info(response[i].Addr)
-		conn, err := quicx.Dial(response[i].Addr, &tls.Config{
-			InsecureSkipVerify: true,
-			NextProtos:         []string{"quic-echo-example"},
-			MaxVersion:         tls.VersionTLS13,
-		}, &quicx.Config{
-			MaxIdleTimeout: time.Minute,
-		})
-		//conn, err := net.Dial("tcp", response[i].Addr)
+		// conn, err := quicx.Dial(response[i].Addr, &tls.Config{
+		// 	InsecureSkipVerify: true,
+		// 	NextProtos:         []string{"quic-echo-example"},
+		// 	MaxVersion:         tls.VersionTLS13,
+		// }, &quicx.Config{
+		// 	MaxIdleTimeout: time.Minute,
+		// })
+		conn, err := net.Dial("tcp", response[i].Addr)
 		if err != nil {
 			log.Error(err.Error())
 			continue
@@ -92,8 +88,6 @@ func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message
 }
 
 func (x *Handle) Go(ctx context.Context, message proto.Message) error {
-	x.Lock()
-	defer x.Unlock()
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
