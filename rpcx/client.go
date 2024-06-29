@@ -53,18 +53,17 @@ func (x *XClient) Register(h interface{}) error {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
+	//ticker := time.NewTicker(time.Second)
+	for {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
 			return err
 		}
 	}
-	return nil
 }
 
 func (x *XClient) Ping(ctx context.Context) error {
-	if _, err := x.Call(ctx, &pb.PingRequest{}); err != nil {
+	if err := x.Go(ctx, &pb.PingRequest{}); err != nil {
 		return err
 	}
 	return nil
@@ -136,7 +135,7 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		go x.handle(ctx, message)
+		x.handle(ctx, message)
 	}
 }
 

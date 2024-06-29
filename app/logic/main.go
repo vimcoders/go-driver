@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -76,13 +77,20 @@ func main() {
 	log.Infof("RUNNING %s %s", listener.Addr().String(), key)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	log.Info("SHUTDOWN", <-quit)
-	handler.Client.Delete(ctx, key)
-	log.Info("ETCD DEL DOWN..")
-	cancel()
-	log.Info("cancel() DOWN....")
-	listener.Close()
-	log.Info("listener.Close() DOWN.....")
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-quit:
+			handler.Client.Delete(ctx, key)
+			log.Info("ETCD DEL DOWN..")
+			cancel()
+			log.Info("cancel() DOWN....")
+			return
+		case <-ticker.C:
+			log.Debug(runtime.NumGoroutine())
+		}
+	}
+
 }
 
 func GenerateTLSConfig() *tls.Config {

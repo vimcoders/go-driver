@@ -29,6 +29,9 @@ type Handle struct {
 	sync.RWMutex
 	Users []*driver.User
 	Opt   *conf.Conf
+	total uint64
+	unix  int64
+	c     rpcx.Client
 }
 
 // MakeHandler creates a Handler instance
@@ -59,36 +62,54 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
+	x.unix = time.Now().Unix()
+	//go cli.Keeplive(ctx)
+	x.c = cli
 	//go cli.Keeplive(context.Background())
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	log.Debug("PingRequest")
+	x.Lock()
+	defer x.Unlock()
+	x.total++
+	if x.total%500000 == 0 {
+		log.Debug("PingRequest", x.total)
+	}
 	return &pb.PingResponse{}, nil
 }
 
 func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {
-	methodName := proto.MessageName(message).Name()
-	method := reflect.ValueOf(x).MethodByName(string(methodName))
-	if ok := method.IsValid(); !ok {
-		return nil, errors.New("method.IsValid(); !ok")
-	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	result := method.Call(args)
-	if len(result) <= 0 {
-		return nil, errors.New("len(result) <= 0")
-	}
-	return result[0].Interface().(proto.Message), nil
+	// methodName := proto.MessageName(message).Name()
+	// method := reflect.ValueOf(x).MethodByName(string(methodName))
+	// if ok := method.IsValid(); !ok {
+	// 	return nil, errors.New("method.IsValid(); !ok")
+	// }
+	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	// result := method.Call(args)
+	// if len(result) <= 0 {
+	// 	return nil, errors.New("len(result) <= 0")
+	// }
+	return &pb.PingResponse{}, nil
 }
 
 func (x *Handle) Go(ctx context.Context, message proto.Message) error {
-	methodName := proto.MessageName(message).Name()
-	method := reflect.ValueOf(x).MethodByName(string(methodName))
-	if ok := method.IsValid(); !ok {
-		return errors.New("method.IsValid(); !ok")
+	// methodName := proto.MessageName(message).Name()
+	// method := reflect.ValueOf(x).MethodByName(string(methodName))
+	// if ok := method.IsValid(); !ok {
+	// 	return errors.New("method.IsValid(); !ok")
+	// }
+	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	// method.Call(args)
+	x.c.Go(ctx, &pb.PingResponse{})
+	x.Lock()
+	defer x.Unlock()
+	unix := time.Now().Unix()
+	x.total++
+	if unix != x.unix {
+		log.Debug(x.total, " request/s")
+		x.total = 0
+		x.unix = unix
 	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	method.Call(args)
 	return nil
 }
 

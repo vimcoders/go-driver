@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net"
+	"sync"
 	"time"
 
 	"go-driver/conf"
@@ -24,6 +25,9 @@ type Handle struct {
 	rpcclient rpcx.Client
 	*etcd.Client
 	*conf.Conf
+	sync.RWMutex
+	total uint64
+	unix  int64
 }
 
 // MakeHandler creates a Handler instance
@@ -69,7 +73,9 @@ func (x *Handle) DialLogic() error {
 			log.Error(err.Error())
 			continue
 		}
-		go cli.Keeplive(context.Background())
+		for i := 0; i < 1; i++ {
+			go cli.Keeplive(context.Background())
+		}
 		x.rpcclient = cli
 		return nil
 	}
@@ -86,6 +92,15 @@ func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message
 }
 
 func (x *Handle) Go(ctx context.Context, message proto.Message) error {
+	x.Lock()
+	defer x.Unlock()
+	unix := time.Now().Unix()
+	x.total++
+	if unix != x.unix {
+		log.Debug(x.total, " request/s")
+		x.total = 0
+		x.unix = unix
+	}
 	return nil
 }
 
