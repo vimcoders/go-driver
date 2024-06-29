@@ -98,11 +98,16 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		go x.handle(ctx, message)
+		x.handle(ctx, message)
 	}
 }
 
-func (x *XClient) handle(ctx context.Context, message Message) error {
+func (x *XClient) handle(ctx context.Context, message Message) (err error) {
+	defer func() {
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}()
 	req, err := x.new(message.kind())
 	if err != nil {
 		return err
@@ -111,7 +116,7 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 		return err
 	}
 	if h, ok := x.Handler.(CHandler); ok {
-		if err := h.Handle(ctx, req); err != nil {
+		if err := h.ServeTCP(ctx, req); err != nil {
 			return err
 		}
 		return nil
@@ -121,7 +126,7 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 		if err != nil {
 			return err
 		}
-		if err := h.Handle(ctx, req, reply); err != nil {
+		if err := h.ServeTCP(ctx, req, reply); err != nil {
 			return err
 		}
 		return nil
