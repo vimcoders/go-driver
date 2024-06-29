@@ -150,10 +150,20 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 	}
 	seq, ack := message.seq(), message.ack()
 	if seq == math.MaxUint32 {
-		return x.serveCast(ctx, response)
+		return x.Handler.Go(ctx, response)
 	}
 	if seq > 0 {
-		return x.serveCall(ctx, seq, response)
+		result, err := x.Handler.Call(ctx, response)
+		if err != nil {
+			return err
+		}
+		pusher := &Pusher{
+			Conn:     x.Conn,
+			timeout:  x.Timeout,
+			messages: x.messages,
+			ack:      seq,
+		}
+		return pusher.push(ctx, result)
 	}
 	call := x.done(ack)
 	if call == nil {
@@ -174,30 +184,6 @@ func (x *XClient) new(kind uint16) (proto.Message, error) {
 		return nil, errors.New("kind >= uint16(len(x.messages))")
 	}
 	return x.messages[kind].ProtoReflect().New().Interface(), nil
-}
-
-func (x *XClient) serveCall(ctx context.Context, seq uint32, message proto.Message) error {
-	// methodName := proto.MessageName(message).Name()
-	// method := reflect.ValueOf(x.Handler).MethodByName(string(methodName))
-	// if ok := method.IsValid(); !ok {
-	// 	return errors.New("method.IsValid(); !ok")
-	// }
-	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	result, err := x.Handler.Call(ctx, message)
-	if err != nil {
-		return err
-	}
-	pusher := &Pusher{
-		Conn:     x.Conn,
-		timeout:  x.Timeout,
-		messages: x.messages,
-		ack:      seq,
-	}
-	return pusher.push(ctx, result)
-}
-
-func (x *XClient) serveCast(ctx context.Context, message proto.Message) error {
-	return x.Handler.Go(ctx, message)
 }
 
 func (x *XClient) addCall() (chan proto.Message, uint32, error) {
