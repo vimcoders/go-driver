@@ -56,12 +56,12 @@ func (x Message) ack() uint32 {
 }
 
 // 从数据流中获取协议号
-func (x Message) Kind() uint16 {
+func (x Message) kind() uint16 {
 	return binary.BigEndian.Uint16(x[12:])
 }
 
 // 从数据流中获取包体
-func (x Message) Message() []byte {
+func (x Message) message() []byte {
 	return x[14:]
 }
 

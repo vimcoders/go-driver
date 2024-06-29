@@ -90,7 +90,7 @@ func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.M
 			return errors.New("timeout")
 		case message := <-call:
 			close(call)
-			return proto.Unmarshal(message.Message(), reply)
+			return proto.Unmarshal(message.message(), reply)
 		}
 	}
 	return errors.New("try many request")
@@ -159,21 +159,19 @@ func (x *XClient) handle(ctx context.Context, message Message) error {
 	}
 }
 
-func (x *XClient) unmarshal(message Message) (proto.Message, error) {
-	kind := message.Kind()
+func (x *XClient) new(kind uint16) (proto.Message, error) {
 	if kind >= uint16(len(x.messages)) {
 		return nil, errors.New("kind >= uint16(len(x.messages))")
 	}
-	newMessage := x.messages[kind].ProtoReflect().New().Interface()
-	if err := proto.Unmarshal(message.Message(), newMessage); err != nil {
-		return nil, err
-	}
-	return newMessage, nil
+	return x.messages[kind].ProtoReflect().New().Interface(), nil
 }
 
 func (x *XClient) handleCall(ctx context.Context, message Message) error {
-	req, err := x.unmarshal(message)
+	req, err := x.new(message.kind())
 	if err != nil {
+		return err
+	}
+	if err := proto.Unmarshal(message.message(), req); err != nil {
 		return err
 	}
 	methodName := proto.MessageName(req).Name()
@@ -196,8 +194,11 @@ func (x *XClient) handleCall(ctx context.Context, message Message) error {
 }
 
 func (x *XClient) handleCast(ctx context.Context, message Message) error {
-	req, err := x.unmarshal(message)
+	req, err := x.new(message.kind())
 	if err != nil {
+		return err
+	}
+	if err := proto.Unmarshal(message.message(), req); err != nil {
 		return err
 	}
 	methodName := proto.MessageName(req).Name()
