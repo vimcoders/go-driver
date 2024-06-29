@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"errors"
+	"math"
 	"net"
 	"reflect"
 	"runtime/debug"
@@ -54,9 +55,9 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := rpcx.NewClient(conn)
+	cli := rpcx.NewClient(conn, math.MaxUint16)
 	cli.Register(x)
-	go cli.Keeplive(context.Background())
+	//go cli.Keeplive(context.Background())
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {

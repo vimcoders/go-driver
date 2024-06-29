@@ -59,13 +59,15 @@ func (x *Handle) DialLogic() error {
 		})
 		//conn, err := net.Dial("tcp", response[i].Addr)
 		if err != nil {
-			return err
+			log.Error(err.Error())
+			continue
 		}
 		log.Info(conn.RemoteAddr().String())
-		cli := rpcx.NewClient(conn)
+		cli := rpcx.NewClient(conn, 1)
 		cli.Register(x)
 		go cli.Keeplive(context.Background())
 		x.c = cli
+		return nil
 	}
 	return nil
 }

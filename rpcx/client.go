@@ -25,15 +25,17 @@ type XClient struct {
 	Buffsize  uint16
 	Timeout   time.Duration
 	messages  []proto.Message
+	seq       uint16
 }
 
-func NewClient(c net.Conn) Client {
+func NewClient(c net.Conn, seq uint16) Client {
 	x := &XClient{
 		Conn:     c,
 		pending:  make(map[uint32]chan Message),
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 120,
 		messages: messages,
+		seq:      seq,
 	}
 	return x
 }
@@ -44,7 +46,7 @@ func (x *XClient) Register(h Handler) {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second * 60)
 	for range ticker.C {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
@@ -55,7 +57,8 @@ func (x *XClient) Keeplive(ctx context.Context) error {
 }
 
 func (x *XClient) Ping(ctx context.Context) error {
-	if err := x.Go(ctx, &pb.PingRequest{}); err != nil {
+	var reply pb.PingResponse
+	if err := x.Call(ctx, &pb.PingRequest{}, &reply); err != nil {
 		return err
 	}
 	return nil
@@ -82,9 +85,9 @@ func (x *XClient) Call(ctx context.Context, request proto.Message, reply proto.M
 		case <-ctx.Done():
 			x.done(messageId)
 			return errors.New("timeout")
-		case v := <-call:
+		case message := <-call:
 			close(call)
-			return proto.Unmarshal(v.Message(), reply)
+			return proto.Unmarshal(message.Message(), reply)
 		}
 	}
 	return errors.New("try many request")
@@ -207,7 +210,8 @@ func (x *XClient) handleCast(ctx context.Context, message Message) error {
 func (x *XClient) addCall() (chan Message, uint32, error) {
 	x.Lock()
 	defer x.Unlock()
-	for i := uint32(1); i < math.MaxUint16; i++ {
+	limit := uint32(math.MaxUint16) + uint32(x.seq)
+	for i := uint32(x.seq); i < limit; i++ {
 		messageId := x.messageId + i
 		if _, ok := x.pending[messageId]; ok {
 			continue
@@ -220,11 +224,12 @@ func (x *XClient) addCall() (chan Message, uint32, error) {
 	return nil, 0, errors.New("too many request")
 }
 
-func (x *XClient) done(seqNumber uint32) chan Message {
+func (x *XClient) done(seq uint32) chan Message {
+	log.Debug(seq)
 	x.Lock()
 	defer x.Unlock()
-	if v, ok := x.pending[seqNumber]; ok {
-		delete(x.pending, seqNumber)
+	if v, ok := x.pending[seq]; ok {
+		delete(x.pending, seq)
 		return v
 	}
 	return nil
