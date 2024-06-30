@@ -136,16 +136,13 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		x.handleGrpc(ctx, message)
+		if err := x.handleGrpc(ctx, message); err != nil {
+			return err
+		}
 	}
 }
 
 func (x *XClient) handleGrpc(ctx context.Context, message Message) (err error) {
-	defer func() {
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}()
 	kind := message.kind()
 	if kind >= uint16(len(x.desc.Methods)) {
 		return errors.New("kind >= len(x.desc.Methods)")
