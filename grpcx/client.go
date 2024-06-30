@@ -27,6 +27,7 @@ type XClient struct {
 	seq      uint32
 	desc     grpc.ServiceDesc
 	svr      any
+	tryCount uint8
 }
 
 func NewClient(c net.Conn, seq uint32) Client {
@@ -37,6 +38,7 @@ func NewClient(c net.Conn, seq uint32) Client {
 		timeout:  time.Second * 240,
 		seq:      seq,
 		desc:     HandlerDesc,
+		tryCount: 3,
 	}
 	x.HandlerClient = pb.NewHandlerClient(x)
 	return x
@@ -57,7 +59,7 @@ func (x *XClient) Go(ctx context.Context, method string, req proto.Message) erro
 }
 
 func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
-	for i := 0; i < math.MaxInt32; i++ {
+	for i := 0; i < int(x.tryCount); i++ {
 		caller, seq, err := x.newCaller()
 		if err != nil {
 			log.Error(err.Error())
