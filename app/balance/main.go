@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	//runtime.GOMAXPROCS(1)
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./comet.conf", "comet.conf")
 	ymalBytes, err := os.ReadFile(fileName)

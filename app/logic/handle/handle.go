@@ -63,7 +63,7 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 10000; i++ {
 		go cli.Keeplive(context.Background())
 	}
 	x.unix = time.Now().Unix()

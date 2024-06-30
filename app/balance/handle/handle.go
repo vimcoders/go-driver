@@ -75,7 +75,7 @@ func (x *Handle) DialLogic() error {
 			log.Error(err.Error())
 			continue
 		}
-		for i := 0; i < 1; i++ {
+		for i := 0; i < 10000; i++ {
 			go cli.Keeplive(context.Background())
 		}
 		x.rpcclient = cli
