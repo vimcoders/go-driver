@@ -49,7 +49,6 @@ func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any
 			log.Error(err.Error())
 			continue
 		}
-		log.Debug(seq)
 		pusher := &Pusher{
 			Conn:       x.Conn,
 			timeout:    x.Timeout,
