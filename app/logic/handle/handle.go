@@ -32,6 +32,7 @@ type Handle struct {
 	unix  int64
 	c     rpcx.Client
 	sync.RWMutex
+	pb.UnimplementedHandlerServer
 }
 
 // MakeHandler creates a Handler instance
@@ -58,16 +59,15 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := rpcx.NewClient(conn, math.MaxUint16)
+	cli := rpcx.NewClient(conn, math.MaxUint32/2+1, math.MaxUint32)
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
-	go cli.Keeplive(context.Background())
 	x.unix = time.Now().Unix()
 	x.c = cli
 }
 
-func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
@@ -75,7 +75,7 @@ func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.Ping
 		x.total = 0
 		x.unix = unix
 	}
-	return &pb.PingResponse{}, nil
+	return &pb.PingResponse{Message: req.Message}, nil
 }
 
 func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {

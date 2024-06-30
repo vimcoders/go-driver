@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -34,23 +35,25 @@ func decode(b *bufio.Reader) (Message, error) {
 }
 
 // 数据流加密
-func encode(seq, ack uint32, kind uint16, message proto.Message) (Message, error) {
-	b, err := proto.Marshal(message)
+func encode(seq, ack uint32, kind uint16, iMessage proto.Message) (Message, error) {
+	b, err := proto.Marshal(iMessage)
 	if err != nil {
 		return nil, err
 	}
-	var header [14]byte
-	binary.BigEndian.PutUint32(header[:], uint32(len(header)+len(b)))
-	binary.BigEndian.PutUint32(header[4:], seq)
-	binary.BigEndian.PutUint32(header[8:], ack)
-	binary.BigEndian.PutUint16(header[12:], uint16(kind))
-	return append(header[:], b...), nil
+	var message [14]byte
+	binary.BigEndian.PutUint32(message[:], uint32(len(message)+len(b)))
+	binary.BigEndian.PutUint32(message[4:], seq)
+	binary.BigEndian.PutUint32(message[8:], ack)
+	binary.BigEndian.PutUint16(message[12:], uint16(kind))
+	return append(message[:], b...), nil
 }
 
+// 获取请求中的序列号
 func (x Message) seq() uint32 {
 	return binary.BigEndian.Uint32(x[4:])
 }
 
+// 获取请求中的回复确认号
 func (x Message) ack() uint32 {
 	return binary.BigEndian.Uint32(x[8:])
 }
@@ -61,39 +64,36 @@ func (x Message) kind() uint16 {
 }
 
 // 从数据流中获取包体
-func (x Message) message() []byte {
+func (x Message) payload() []byte {
 	return x[14:]
 }
 
+// 推送一个proto
 type Pusher struct {
 	seq uint32
 	ack uint32
 	net.Conn
-	timeout  time.Duration
-	messages []proto.Message
+	timeout    time.Duration
+	methodName string
+	desc       grpc.ServiceDesc
 }
 
-func (x *Pusher) push(_ context.Context, iMessage proto.Message) error {
-	response, err := x.marshal(iMessage)
-	if err != nil {
-		return err
-	}
-	if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
-		return err
-	}
-	if _, err := x.Conn.Write(response); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (x *Pusher) marshal(message proto.Message) ([]byte, error) {
-	messageName := proto.MessageName(message).Name()
-	for i := uint16(0); i < uint16(len(x.messages)); i++ {
-		if messageName != proto.MessageName(x.messages[i]).Name() {
+func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
+	for i := uint16(0); i < uint16(len(x.desc.Methods)); i++ {
+		if x.methodName != x.desc.Methods[i].MethodName {
 			continue
 		}
-		return encode(x.seq, x.ack, i, message)
+		b, err := encode(x.seq, x.ack, i, iMessage)
+		if err != nil {
+			return err
+		}
+		if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
+			return err
+		}
+		if _, err := x.Conn.Write(b); err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil, fmt.Errorf("message %s not registered", proto.MessageName(message))
+	return fmt.Errorf("%s not registed", x.methodName)
 }

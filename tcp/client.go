@@ -69,7 +69,7 @@ func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
 		timeout:  x.Timeout,
 		messages: x.messages,
 	}
-	return pusher.push(context.Background(), request)
+	return pusher.Push(context.Background(), request)
 }
 
 func (x *XClient) Close() error {

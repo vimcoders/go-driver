@@ -2,7 +2,6 @@ package handle
 
 import (
 	"context"
-	"go-driver/pb"
 	"go-driver/rpcx"
 	"go-driver/tcp"
 
@@ -16,16 +15,16 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
-	reply, err := x.rpcclient.Call(context.Background(), request)
-	if err != nil {
-		return err
-	}
-	if loginRequest, ok := request.(*pb.LoginRequest); ok && len(x.Token) <= 0 {
-		x.Token = loginRequest.Token
-	}
-	if err := x.tcpclient.Go(ctx, reply); err != nil {
-		return err
-	}
+	//reply, err := x.rpcclient.Call(context.Background(), request)
+	// if err != nil {
+	// 	return err
+	// }
+	// if loginRequest, ok := request.(*pb.LoginRequest); ok && len(x.Token) <= 0 {
+	// 	x.Token = loginRequest.Token
+	// }
+	// if err := x.tcpclient.Go(ctx, reply); err != nil {
+	// 	return err
+	// }
 	return nil
 }
 

@@ -65,27 +65,22 @@ type Pusher struct {
 	messages []proto.Message
 }
 
-func (x *Pusher) push(_ context.Context, iMessage proto.Message) error {
-	response, err := x.marshal(iMessage)
-	if err != nil {
-		return err
-	}
-	if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
-		return err
-	}
-	if _, err := x.Conn.Write(response); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (x *Pusher) marshal(message proto.Message) ([]byte, error) {
-	messageName := proto.MessageName(message).Name()
+func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
+	messageName := proto.MessageName(iMessage).Name()
 	for i := uint16(0); i < uint16(len(x.messages)); i++ {
 		if messageName != proto.MessageName(x.messages[i]).Name() {
 			continue
 		}
-		return encode(i, message)
+		b, err := encode(i, iMessage)
+		if err != nil {
+			return err
+		}
+		if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
+			return err
+		}
+		if _, err := x.Conn.Write(b); err != nil {
+			return err
+		}
 	}
-	return nil, fmt.Errorf("message %s not registered", proto.MessageName(message))
+	return fmt.Errorf("%s not registered", messageName)
 }

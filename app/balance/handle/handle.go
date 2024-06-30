@@ -3,6 +3,7 @@ package handle
 import (
 	"context"
 	"crypto/tls"
+	"math"
 	"net"
 	"runtime"
 	"sync"
@@ -29,6 +30,7 @@ type Handle struct {
 	total uint64
 	unix  int64
 	sync.RWMutex
+	pb.UnimplementedHandlerServer
 }
 
 // MakeHandler creates a Handler instance
@@ -69,19 +71,21 @@ func (x *Handle) DialLogic() error {
 			continue
 		}
 		log.Info(conn.RemoteAddr().String())
-		cli := rpcx.NewClient(conn, 1)
+		cli := rpcx.NewClient(conn, 1, math.MaxUint32/2)
 		if err := cli.Register(x); err != nil {
 			log.Error(err.Error())
 			continue
 		}
-		go cli.Keeplive(context.Background())
+		for i := 0; i < 1; i++ {
+			go cli.Keeplive(context.Background())
+		}
 		x.rpcclient = cli
 		return nil
 	}
 	return nil
 }
 
-func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	x.Lock()
 	defer x.Unlock()
 	unix := time.Now().Unix()
