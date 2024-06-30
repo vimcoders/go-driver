@@ -2,9 +2,7 @@ package handle
 
 import (
 	"context"
-	"errors"
 	"net"
-	"reflect"
 	"time"
 
 	"go-driver/conf"
@@ -96,13 +94,20 @@ func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message
 }
 
 func (x *Handle) Go(ctx context.Context, message proto.Message) error {
-	methodName := proto.MessageName(message).Name()
-	method := reflect.ValueOf(x).MethodByName(string(methodName))
-	if ok := method.IsValid(); !ok {
-		return errors.New("method.IsValid(); !ok")
+	// methodName := proto.MessageName(message).Name()
+	// method := reflect.ValueOf(x).MethodByName(string(methodName))
+	// if ok := method.IsValid(); !ok {
+	// 	return errors.New("method.IsValid(); !ok")
+	// }
+	// args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	// method.Call(args)
+	unix := time.Now().Unix()
+	x.total++
+	if unix != x.unix {
+		log.Debug(x.total, " request/s")
+		x.total = 0
+		x.unix = unix
 	}
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
-	method.Call(args)
 	return nil
 }
 
