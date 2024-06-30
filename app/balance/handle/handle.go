@@ -2,7 +2,6 @@ package handle
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"runtime"
 	"sync"
@@ -12,7 +11,6 @@ import (
 	"go-driver/etcdx"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/quicx"
 	"go-driver/rpcx"
 	"go-driver/tcp"
 
@@ -57,14 +55,14 @@ func (x *Handle) DialLogic() error {
 	}
 	for i := 0; i < len(response); i++ {
 		log.Info(response[i].Addr)
-		conn, err := quicx.Dial(response[i].Addr, &tls.Config{
-			InsecureSkipVerify: true,
-			NextProtos:         []string{"quic-echo-example"},
-			MaxVersion:         tls.VersionTLS13,
-		}, &quicx.Config{
-			MaxIdleTimeout: time.Minute,
-		})
-		//conn, err := net.Dial("tcp", response[i].Addr)
+		// conn, err := quicx.Dial(response[i].Addr, &tls.Config{
+		// 	InsecureSkipVerify: true,
+		// 	NextProtos:         []string{"quic-echo-example"},
+		// 	MaxVersion:         tls.VersionTLS13,
+		// }, &quicx.Config{
+		// 	MaxIdleTimeout: time.Minute,
+		// })
+		conn, err := net.Dial("tcp", response[i].Addr)
 		if err != nil {
 			log.Error(err.Error())
 			continue
@@ -90,7 +88,7 @@ func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
-		log.Debug(x.total, " request/s")
+		log.Debug(x.total, " request/s", " NumGoroutine ", runtime.NumGoroutine())
 		x.total = 0
 		x.unix = unix
 	}

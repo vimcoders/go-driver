@@ -2,13 +2,9 @@ package rpcx
 
 import (
 	"bufio"
-	"context"
 	"encoding/binary"
 	"fmt"
-	"net"
-	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -59,41 +55,11 @@ func (x Message) ack() uint32 {
 }
 
 // 从数据流中获取协议号
-func (x Message) kind() uint16 {
+func (x Message) id() uint16 {
 	return binary.BigEndian.Uint16(x[12:])
 }
 
 // 从数据流中获取包体
 func (x Message) payload() []byte {
 	return x[14:]
-}
-
-// 推送一个proto
-type Pusher struct {
-	seq uint32
-	ack uint32
-	net.Conn
-	timeout    time.Duration
-	methodName string
-	desc       grpc.ServiceDesc
-}
-
-func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
-	for i := uint16(0); i < uint16(len(x.desc.Methods)); i++ {
-		if x.methodName != x.desc.Methods[i].MethodName {
-			continue
-		}
-		b, err := encode(x.seq, x.ack, i, iMessage)
-		if err != nil {
-			return err
-		}
-		if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
-			return err
-		}
-		if _, err := x.Conn.Write(b); err != nil {
-			return err
-		}
-		return nil
-	}
-	return fmt.Errorf("%s not registed", x.methodName)
 }
