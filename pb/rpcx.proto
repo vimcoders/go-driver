@@ -1,7 +1,7 @@
 syntax = "proto3";
 package pb;
 option go_package = "../pb";
-// import "login.proto";
+import "login.proto";
 
 message PingRequest {
 	bytes Message = 1;
@@ -12,7 +12,8 @@ message PingResponse {
 }
 
 service Handler {
-	rpc PingRequest(PingRequest) returns (PingResponse) {}
+	rpc Ping(PingRequest) returns (PingResponse) {}
+	rpc Login(LoginRequest) returns (LoginResponse) {}
 }
 
 // protoc --go_out=. --go-grpc_out=. *.proto

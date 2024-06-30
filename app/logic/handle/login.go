@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func (x *Handle) LoginRequest(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (x *Handle) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	return &pb.LoginResponse{Code: http.StatusOK}, nil
 }
 

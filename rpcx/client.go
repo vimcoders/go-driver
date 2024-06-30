@@ -21,24 +21,21 @@ type XClient struct {
 	svr any
 	net.Conn
 	sync.RWMutex
-	pending   map[uint32]chan Message
-	Buffsize  uint16
-	Timeout   time.Duration
-	seq       uint32
-	limit     uint32
-	messageId uint32
-	desc      grpc.ServiceDesc
+	pending  map[uint32]chan Message
+	Buffsize uint16
+	Timeout  time.Duration
+	seq      uint32
+	desc     grpc.ServiceDesc
 	HandlerClient
 }
 
-func NewClient(c net.Conn, seq, limit uint32) Client {
+func NewClient(c net.Conn, seq uint32) Client {
 	x := &XClient{
 		Conn:     c,
 		pending:  make(map[uint32]chan Message),
 		Buffsize: 16 * 1024,
 		Timeout:  time.Second * 240,
 		seq:      seq,
-		limit:    limit,
 		desc:     HandlerDesc,
 	}
 	x.HandlerClient = pb.NewHandlerClient(x)
@@ -47,20 +44,21 @@ func NewClient(c net.Conn, seq, limit uint32) Client {
 
 func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
 	for i := 0; i < math.MaxInt32; i++ {
-		call, messageId, err := x.addCall()
+		call, seq, err := x.newCaller()
 		if err != nil {
 			log.Error(err.Error())
 			continue
 		}
+		log.Debug(seq)
 		pusher := &Pusher{
 			Conn:       x.Conn,
 			timeout:    x.Timeout,
-			seq:        messageId,
+			seq:        seq,
 			desc:       x.desc,
 			methodName: filepath.Base(method),
 		}
 		if err := pusher.Push(context.Background(), args.(proto.Message)); err != nil {
-			x.done(messageId)
+			x.done(seq)
 			return err
 		}
 		select {
@@ -105,8 +103,14 @@ func (x *XClient) Register(svr any) error {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
+	// for {
+	// 	if err := x.Go(ctx, "Ping", &pb.PingRequest{Message: []byte("ping")}); err != nil {
+	// 		log.Error(err.Error())
+	// 		return err
+	// 	}
+	// }
 	for {
-		if err := x.Go(ctx, "Ping", &pb.PingRequest{Message: []byte("ping")}); err != nil {
+		if _, err := x.Ping(ctx, &pb.PingRequest{Message: []byte("ping")}); err != nil {
 			log.Error(err.Error())
 			return err
 		}
@@ -191,18 +195,25 @@ func (x *XClient) handleGrpc(ctx context.Context, message Message) (err error) {
 	return nil
 }
 
-func (x *XClient) addCall() (chan Message, uint32, error) {
+func (x *XClient) newCaller() (chan Message, uint32, error) {
 	x.Lock()
 	defer x.Unlock()
 	for i := uint32(1); i < math.MaxInt32; i++ {
-		messageId := x.messageId + 1
-		if _, ok := x.pending[messageId]; ok {
+		seq := x.seq + 1
+		if _, ok := x.pending[seq]; ok {
 			continue
 		}
 		done := make(chan Message, 1)
-		x.pending[messageId] = done
-		x.messageId = messageId % math.MaxUint32
-		return done, messageId, nil
+		x.pending[seq] = done
+		switch seq {
+		case math.MaxUint32:
+			x.seq = math.MaxUint32 / 2
+		case math.MaxUint32 / 2:
+			x.seq = 0
+		default:
+			x.seq = seq
+		}
+		return done, seq, nil
 	}
 	return nil, 0, errors.New("too many request")
 }

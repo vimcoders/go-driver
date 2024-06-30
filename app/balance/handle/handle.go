@@ -3,7 +3,6 @@ package handle
 import (
 	"context"
 	"crypto/tls"
-	"math"
 	"net"
 	"runtime"
 	"sync"
@@ -71,7 +70,7 @@ func (x *Handle) DialLogic() error {
 			continue
 		}
 		log.Info(conn.RemoteAddr().String())
-		cli := rpcx.NewClient(conn, 1, math.MaxUint32/2)
+		cli := rpcx.NewClient(conn, 0)
 		if err := cli.Register(x); err != nil {
 			log.Error(err.Error())
 			continue

@@ -59,9 +59,12 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := rpcx.NewClient(conn, math.MaxUint32/2+1, math.MaxUint32)
+	cli := rpcx.NewClient(conn, math.MaxUint32/2)
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
+	}
+	for i := 0; i < 1; i++ {
+		go cli.Keeplive(context.Background())
 	}
 	x.unix = time.Now().Unix()
 	x.c = cli
