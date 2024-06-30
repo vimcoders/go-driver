@@ -114,11 +114,11 @@ func (x *XClient) Keeplive(ctx context.Context) error {
 }
 
 func (x *XClient) Ping(ctx context.Context, args *pb.PingRequest, opts ...grpc.CallOption) (*pb.PingResponse, error) {
-	if err := x.Go(ctx, "Ping", &pb.PingRequest{Message: []byte("ping")}); err != nil {
-		return nil, err
-	}
-	//return x.HandlerClient.Ping(ctx, args, opts...)
-	return nil, nil
+	// if err := x.Go(ctx, "Ping", &pb.PingRequest{Message: []byte("ping")}); err != nil {
+	// 	return nil, err
+	// }
+	// return nil, nil
+	return x.HandlerClient.Ping(ctx, args, opts...)
 }
 
 func (x *XClient) Close() error {

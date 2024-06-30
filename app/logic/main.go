@@ -11,16 +11,17 @@ import (
 	"encoding/pem"
 	"flag"
 	"math/big"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go-driver/app/logic/handle"
 	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
+	"go-driver/quicx"
 
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
@@ -43,14 +44,14 @@ func main() {
 	log.Info("Unmarshal YAML DOWN")
 	handler := handle.MakeHandler(&opt)
 	defer handler.Close()
-	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
-	if err != nil {
-		panic(err)
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
+	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// listener, err := net.ListenTCP("tcp", addr)
+	listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
+		MaxIdleTimeout: time.Minute,
+	})
 	if err != nil {
 		panic(err)
 	}

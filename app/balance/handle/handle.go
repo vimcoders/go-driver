@@ -2,6 +2,7 @@ package handle
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"runtime"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
+	"go-driver/quicx"
 	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -55,14 +57,14 @@ func (x *Handle) DialLogic() error {
 	}
 	for i := 0; i < len(response); i++ {
 		log.Info(response[i].Addr)
-		// conn, err := quicx.Dial(response[i].Addr, &tls.Config{
-		// 	InsecureSkipVerify: true,
-		// 	NextProtos:         []string{"quic-echo-example"},
-		// 	MaxVersion:         tls.VersionTLS13,
-		// }, &quicx.Config{
-		// 	MaxIdleTimeout: time.Minute,
-		// })
-		conn, err := net.Dial("tcp", response[i].Addr)
+		conn, err := quicx.Dial(response[i].Addr, &tls.Config{
+			InsecureSkipVerify: true,
+			NextProtos:         []string{"quic-echo-example"},
+			MaxVersion:         tls.VersionTLS13,
+		}, &quicx.Config{
+			MaxIdleTimeout: time.Minute,
+		})
+		//conn, err := net.Dial("tcp", response[i].Addr)
 		if err != nil {
 			log.Error(err.Error())
 			continue
