@@ -84,7 +84,7 @@ func main() {
 			log.Info("cancel() DOWN....")
 			return
 		case <-ticker.C:
-			log.Debug(runtime.NumGoroutine())
+			log.Debug("NumGoroutine ", runtime.NumGoroutine())
 		}
 	}
 

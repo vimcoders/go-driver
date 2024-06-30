@@ -2,7 +2,9 @@ package handle
 
 import (
 	"context"
+	"errors"
 	"net"
+	"reflect"
 	"time"
 
 	"go-driver/conf"
@@ -79,15 +81,6 @@ func (x *Handle) DialLogic() error {
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	log.Debug("ping")
-	return &pb.PingResponse{}, nil
-}
-
-func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {
-	return nil, nil
-}
-
-func (x *Handle) Go(ctx context.Context, message proto.Message) error {
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
@@ -95,6 +88,21 @@ func (x *Handle) Go(ctx context.Context, message proto.Message) error {
 		x.total = 0
 		x.unix = unix
 	}
+	return nil, nil
+}
+
+func (x *Handle) Call(ctx context.Context, message proto.Message) (proto.Message, error) {
+	return nil, nil
+}
+
+func (x *Handle) Go(ctx context.Context, message proto.Message) error {
+	methodName := proto.MessageName(message).Name()
+	method := reflect.ValueOf(x).MethodByName(string(methodName))
+	if ok := method.IsValid(); !ok {
+		return errors.New("method.IsValid(); !ok")
+	}
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(message)}
+	method.Call(args)
 	return nil
 }
 

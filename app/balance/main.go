@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -10,6 +11,7 @@ import (
 	"encoding/pem"
 	"flag"
 	"math/big"
+	"net"
 	"os"
 	"os/signal"
 	"runtime"
@@ -19,6 +21,7 @@ import (
 	"go-driver/app/balance/handle"
 	"go-driver/conf"
 	"go-driver/log"
+	"go-driver/quicx"
 
 	"gopkg.in/yaml.v3"
 )
@@ -36,15 +39,14 @@ func main() {
 		panic(err.Error())
 	}
 	handler := handle.MakeHandler(opt)
-	defer handler.Close()
-	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// listener, err := net.ListenTCP("tcp", addr)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	if err != nil {
+		panic(err)
+	}
+	listener, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
 	// tcpAddr := listener.Addr().(*net.TCPAddr)
 	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
 	// 	MaxIdleTimeout: time.Minute,
@@ -52,24 +54,24 @@ func main() {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	// ctx, cancel := context.WithCancel(context.Background())
-	// for i := 0; i < runtime.NumCPU(); i++ {
-	// 	go quicx.ListenAndServe(ctx, listener, handler)
-	// }
-	// log.Infof("running %s", listener.Addr().String())
+	ctx, cancel := context.WithCancel(context.Background())
+	for i := 0; i < runtime.NumCPU(); i++ {
+		go quicx.ListenAndServe(ctx, listener, handler)
+	}
+	log.Infof("running %s", listener.Addr().String())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-quit:
+			handler.Close()
+			cancel()
 			return
 		case <-ticker.C:
-			log.Debug(runtime.NumGoroutine())
+			log.Debug("NumGoroutine ", runtime.NumGoroutine())
 		}
 	}
-	// cancel()
-	// listener.Close()
 }
 
 func GenerateTLSConfig() *tls.Config {
