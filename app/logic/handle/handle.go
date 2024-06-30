@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"reflect"
+	"runtime"
 	"sync"
 	"time"
 
@@ -61,9 +62,7 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
-	for i := 0; i < 2; i++ {
-		go cli.Keeplive(context.Background())
-	}
+	go cli.Keeplive(context.Background())
 	x.unix = time.Now().Unix()
 	x.c = cli
 }
@@ -72,7 +71,7 @@ func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.Ping
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
-		log.Debug(x.total, " request/s")
+		log.Debug(x.total, " request/s", " NumGoroutine ", runtime.NumGoroutine())
 		x.total = 0
 		x.unix = unix
 	}
@@ -104,7 +103,7 @@ func (x *Handle) Go(ctx context.Context, message proto.Message) error {
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
-		log.Debug(x.total, " request/s")
+		log.Debug(x.total, " request/s", " NumGoroutine ", runtime.NumGoroutine())
 		x.total = 0
 		x.unix = unix
 	}

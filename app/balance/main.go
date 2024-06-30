@@ -16,7 +16,6 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"go-driver/app/balance/handle"
 	"go-driver/conf"
@@ -61,17 +60,9 @@ func main() {
 	log.Infof("running %s", listener.Addr().String())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	ticker := time.NewTicker(time.Second)
-	for {
-		select {
-		case <-quit:
-			handler.Close()
-			cancel()
-			return
-		case <-ticker.C:
-			log.Debug("NumGoroutine ", runtime.NumGoroutine())
-		}
-	}
+	log.Info("SHUTDOWN", <-quit)
+	handler.Close()
+	cancel()
 }
 
 func GenerateTLSConfig() *tls.Config {
