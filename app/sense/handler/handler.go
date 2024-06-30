@@ -9,8 +9,8 @@ import (
 	"go-driver/conf"
 	"go-driver/driver"
 	"go-driver/etcdx"
+	"go-driver/grpcx"
 	"go-driver/log"
-	"go-driver/rpcx"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )
@@ -18,7 +18,7 @@ import (
 var handler = &Handler{}
 
 type Handler struct {
-	iClient *rpcx.Client
+	iClient *grpcx.Client
 	driver.Marshal
 	driver.Unmarshal
 	*conf.Conf

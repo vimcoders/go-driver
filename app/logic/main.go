@@ -19,8 +19,8 @@ import (
 	"go-driver/app/logic/handle"
 	"go-driver/conf"
 	"go-driver/etcdx"
+	"go-driver/grpcx"
 	"go-driver/log"
-	"go-driver/rpcx"
 
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
@@ -68,7 +68,7 @@ func main() {
 		panic(err.Error())
 	}
 	log.Info("ETCD Put down")
-	go rpcx.ListenAndServe(ctx, listener, handler)
+	go grpcx.ListenAndServe(ctx, listener, handler)
 	log.Infof("RUNNING %s %s", listener.Addr().String(), key)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

@@ -9,9 +9,9 @@ import (
 
 	"go-driver/conf"
 	"go-driver/etcdx"
+	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/rpcx"
 	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -21,7 +21,7 @@ import (
 var handler = &Handle{}
 
 type Handle struct {
-	rpcclient rpcx.Client
+	rpcclient grpcx.Client
 	*etcd.Client
 	*conf.Conf
 	total uint64
@@ -68,7 +68,7 @@ func (x *Handle) DialLogic() error {
 			continue
 		}
 		log.Info(conn.RemoteAddr().String())
-		cli := rpcx.NewClient(conn, 0)
+		cli := grpcx.NewClient(conn, 0)
 		if err := cli.Register(x); err != nil {
 			log.Error(err.Error())
 			continue

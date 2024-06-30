@@ -2,7 +2,7 @@ package handle
 
 import (
 	"context"
-	"go-driver/rpcx"
+	"go-driver/grpcx"
 	"go-driver/tcp"
 
 	"google.golang.org/protobuf/proto"
@@ -10,7 +10,7 @@ import (
 
 type Session struct {
 	tcpclient tcp.Client
-	rpcclient rpcx.Client
+	rpcclient grpcx.Client
 	Token     string
 }
 

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"go-driver/driver"
+	"go-driver/grpcx"
 	"go-driver/log"
-	"go-driver/rpcx"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -23,7 +23,7 @@ type Session struct {
 	Token string
 	driver.Marshal
 	driver.Unmarshal
-	iClient *rpcx.Client
+	iClient *grpcx.Client
 	net.Conn
 	Buffsize int
 	Header   int

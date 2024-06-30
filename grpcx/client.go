@@ -1,4 +1,4 @@
-package rpcx
+package grpcx
 
 import (
 	"bufio"

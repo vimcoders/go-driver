@@ -12,10 +12,10 @@ import (
 
 	"go-driver/app/logic/driver"
 	"go-driver/conf"
+	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/mongox"
 	"go-driver/pb"
-	"go-driver/rpcx"
 
 	etcd "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/proto"
@@ -30,7 +30,7 @@ type Handle struct {
 	Opt   *conf.Conf
 	total uint64
 	unix  int64
-	c     rpcx.Client
+	c     grpcx.Client
 	sync.RWMutex
 	pb.UnimplementedHandlerServer
 }
@@ -59,7 +59,7 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := rpcx.NewClient(conn, math.MaxUint32/2)
+	cli := grpcx.NewClient(conn, math.MaxUint32/2)
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
