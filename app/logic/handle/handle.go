@@ -61,12 +61,12 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}
+	go cli.Keeplive(ctx)
 	x.unix = time.Now().Unix()
 	x.c = cli
 }
 
 func (x *Handle) PingRequest(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	x.c.Ping(ctx)
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
