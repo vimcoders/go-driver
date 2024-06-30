@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// 推送一个proto对象到对端
 type Pusher struct {
 	net.Conn
 	seq     uint32

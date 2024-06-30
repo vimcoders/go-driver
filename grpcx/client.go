@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net"
 	"path/filepath"
@@ -21,24 +22,24 @@ type XClient struct {
 	net.Conn
 	HandlerClient
 	sync.RWMutex
-	pending  map[uint32]chan Message
-	buffsize uint16
-	timeout  time.Duration
-	seq      uint32
-	desc     grpc.ServiceDesc
-	svr      any
+	handler  any
 	tryCount uint8
+	buffsize uint16
+	seq      uint32
+	timeout  time.Duration
+	desc     grpc.ServiceDesc
+	pending  map[uint32]chan Message
 }
 
 func NewClient(c net.Conn, seq uint32) Client {
 	x := &XClient{
 		Conn:     c,
-		pending:  make(map[uint32]chan Message),
-		buffsize: 16 * 1024,
-		timeout:  time.Second * 240,
-		seq:      seq,
-		desc:     HandlerDesc,
 		tryCount: 3,
+		seq:      seq,
+		buffsize: 16 * 1024,
+		desc:     HandlerDesc,
+		timeout:  time.Second * 240,
+		pending:  make(map[uint32]chan Message),
 	}
 	x.HandlerClient = pb.NewHandlerClient(x)
 	return x
@@ -60,7 +61,7 @@ func (x *XClient) Go(ctx context.Context, method string, req proto.Message) erro
 
 func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
 	for i := 0; i < int(x.tryCount); i++ {
-		caller, seq, err := x.newCaller()
+		ch, seq, err := x.newCaller()
 		if err != nil {
 			log.Error(err.Error())
 			continue
@@ -80,8 +81,8 @@ func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any
 		case <-ctx.Done():
 			x.done(seq)
 			return errors.New("timeout")
-		case message := <-caller:
-			close(caller)
+		case message := <-ch:
+			close(ch)
 			if err := proto.Unmarshal(message.payload(), reply.(proto.Message)); err != nil {
 				return err
 			}
@@ -95,30 +96,24 @@ func (x *XClient) NewStream(ctx context.Context, desc *grpc.StreamDesc, method s
 	return nil, nil
 }
 
-func (x *XClient) Register(svr any) error {
-	if x.svr != nil {
+func (x *XClient) Register(a any) error {
+	if x.handler != nil {
 		return errors.New("x.svr  != nil")
 	}
-	x.svr = svr
+	x.handler = a
 	go x.pull(context.Background())
 	return nil
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	for {
-		if _, err := x.Ping(ctx, &pb.PingRequest{Message: []byte("ping")}); err != nil {
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
+		if _, err := x.HandlerClient.Ping(ctx, &pb.PingRequest{Message: []byte("ping")}); err != nil {
 			log.Error(err.Error())
 			return err
 		}
 	}
-}
-
-func (x *XClient) Ping(ctx context.Context, args *pb.PingRequest, opts ...grpc.CallOption) (*pb.PingResponse, error) {
-	// if err := x.Go(ctx, "Ping", &pb.PingRequest{Message: []byte("ping")}); err != nil {
-	// 	return nil, err
-	// }
-	// return nil, nil
-	return x.HandlerClient.Ping(ctx, args, opts...)
+	return nil
 }
 
 func (x *XClient) Close() error {
@@ -126,16 +121,17 @@ func (x *XClient) Close() error {
 }
 
 func (x *XClient) callback(ctx context.Context, iMessage Message) error {
-	caller := x.done(iMessage.ack())
-	if caller == nil {
-		return errors.New("done == nil")
+	ch := x.done(iMessage.ack())
+	if ch == nil {
+		return fmt.Errorf("%d ch == nil", iMessage.ack())
 	}
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	select {
-	case caller <- iMessage:
+	case ch <- iMessage:
 		return nil
 	case <-timeoutCtx.Done():
+		close(ch)
 		return nil
 	}
 }
@@ -149,7 +145,7 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	buffer := bufio.NewReaderSize(x.Conn, int(x.buffsize))
+	buf := bufio.NewReaderSize(x.Conn, int(x.buffsize))
 	for {
 		select {
 		case <-ctx.Done():
@@ -159,48 +155,38 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err := x.Conn.SetReadDeadline(time.Now().Add(x.timeout)); err != nil {
 			return err
 		}
-		message, err := decode(buffer)
+		message, err := decode(buf)
 		if err != nil {
 			return err
 		}
-		if err := x.handle(ctx, message); err != nil {
+		method := message.method()
+		if method >= uint16(len(x.desc.Methods)) {
+			return errors.New("kind >= len(x.desc.Methods)")
+		}
+		if message.ack() > 0 {
+			return x.callback(ctx, message)
+		}
+		dec := func(in any) error {
+			if err := proto.Unmarshal(message.payload(), in.(proto.Message)); err != nil {
+				return err
+			}
+			return nil
+		}
+		iResponse, err := x.desc.Methods[method].Handler(x.handler, ctx, dec, nil)
+		if err != nil {
+			return err
+		}
+		if message.seq() == math.MaxUint32 {
+			return nil
+		}
+		b, err := encode(0, message.seq(), 0, iResponse.(proto.Message))
+		if err != nil {
+			return err
+		}
+		if _, err := x.Conn.Write(b); err != nil {
 			return err
 		}
 	}
-}
-
-func (x *XClient) handle(ctx context.Context, message Message) (err error) {
-	methodId := message.id()
-	if methodId >= uint16(len(x.desc.Methods)) {
-		return errors.New("kind >= len(x.desc.Methods)")
-	}
-	seq, ack := message.seq(), message.ack()
-	if ack > 0 {
-		return x.callback(ctx, message)
-	}
-	method := x.desc.Methods[methodId]
-	dec := func(in any) error {
-		iMessage := in.(proto.Message)
-		if err := proto.Unmarshal(message.payload(), iMessage); err != nil {
-			return err
-		}
-		return nil
-	}
-	iResponse, err := method.Handler(x.svr, ctx, dec, nil)
-	if err != nil {
-		return err
-	}
-	if seq == math.MaxUint32 {
-		return nil
-	}
-	b, err := encode(0, seq, 0, iResponse.(proto.Message))
-	if err != nil {
-		return err
-	}
-	if _, err := x.Conn.Write(b); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (x *XClient) newCaller() (chan Message, uint32, error) {
