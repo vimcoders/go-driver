@@ -63,10 +63,14 @@ func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any
 			x.done(messageId)
 			return err
 		}
-		message := <-call
-		close(call)
-		if err := proto.Unmarshal(message.payload(), reply.(proto.Message)); err != nil {
-			return err
+		select {
+		case <-ctx.Done():
+			return errors.New("timeout")
+		case message := <-call:
+			close(call)
+			if err := proto.Unmarshal(message.payload(), reply.(proto.Message)); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
