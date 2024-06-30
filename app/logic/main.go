@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 )
 
 func main() {
+	runtime.GOMAXPROCS(1)
 	log.Info("RUNNING")
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./logic.conf", "logic.conf")
