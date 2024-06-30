@@ -60,32 +60,39 @@ func (x *XClient) Go(ctx context.Context, method string, req proto.Message) erro
 
 func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) (err error) {
 	for i := 0; i < int(x.tryCount); i++ {
-		ch, seq, err := x.newCaller()
-		if err != nil {
+		if err := x.invoke(ctx, method, args, reply); err != nil {
 			log.Error(err.Error())
 			continue
 		}
-		pusher := &Pusher{
-			Conn:    x.Conn,
-			timeout: x.timeout,
-			seq:     seq,
-			desc:    x.desc,
-			method:  filepath.Base(method),
-		}
-		if err := pusher.Push(context.Background(), args.(proto.Message)); err != nil {
-			x.done(seq)
+		return nil
+	}
+	return errors.New("try many invoke")
+}
+
+func (x *XClient) invoke(ctx context.Context, method string, args any, reply any) (err error) {
+	ch, seq, err := x.newCaller()
+	if err != nil {
+		return err
+	}
+	pusher := &Pusher{
+		Conn:    x.Conn,
+		timeout: x.timeout,
+		seq:     seq,
+		desc:    x.desc,
+		method:  filepath.Base(method),
+	}
+	if err := pusher.Push(context.Background(), args.(proto.Message)); err != nil {
+		x.done(seq)
+		return err
+	}
+	select {
+	case <-ctx.Done():
+		x.done(seq)
+		log.Error("invoke timeout")
+	case payload := <-ch:
+		close(ch)
+		if err := proto.Unmarshal(payload, reply.(proto.Message)); err != nil {
 			return err
-		}
-		select {
-		case <-ctx.Done():
-			x.done(seq)
-			return errors.New("timeout")
-		case payload := <-ch:
-			close(ch)
-			if err := proto.Unmarshal(payload, reply.(proto.Message)); err != nil {
-				return err
-			}
-			return nil
 		}
 	}
 	return nil
