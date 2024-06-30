@@ -130,6 +130,7 @@ func (x *XClient) callback(ctx context.Context, ack uint32, b Message) error {
 	select {
 	case ch <- b:
 	case <-timeoutCtx.Done():
+		log.Error("<-timeoutCtx.Done()")
 		close(ch)
 	}
 	return nil
