@@ -92,7 +92,7 @@ func (x *XClient) Go(ctx context.Context, req proto.Message) error {
 func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) (err error) {
 	for i := 0; i < int(x.tryCount); i++ {
 		if err := x.invoke(ctx, method, args, reply); err != nil {
-			log.Error(err.Error())
+			log.Error(err.Error(), method, args, reply)
 			continue
 		}
 		return nil
