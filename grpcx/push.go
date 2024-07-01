@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -15,13 +16,14 @@ type Pusher struct {
 	seq     uint32
 	ack     uint32
 	timeout time.Duration
-	method  string
 	desc    grpc.ServiceDesc
 }
 
 func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
+	messageName := string(proto.MessageName(iMessage).Name())
+	methodName := strings.TrimSuffix(messageName, "Request")
 	for i := uint16(0); i < uint16(len(x.desc.Methods)); i++ {
-		if x.method != x.desc.Methods[i].MethodName {
+		if methodName != x.desc.Methods[i].MethodName {
 			continue
 		}
 		b, err := encode(x.seq, x.ack, i, iMessage)
@@ -36,5 +38,5 @@ func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("%s not registed", x.method)
+	return fmt.Errorf("%s not registed", methodName)
 }

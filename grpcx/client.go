@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"net"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -77,13 +76,12 @@ func newClient(c net.Conn, seq uint32) Client {
 	return x
 }
 
-func (x *XClient) Go(ctx context.Context, method string, req proto.Message) error {
+func (x *XClient) Go(ctx context.Context, req proto.Message) error {
 	pusher := &Pusher{
 		Conn:    x.Conn,
 		timeout: x.timeout,
 		seq:     math.MaxUint32,
 		desc:    x.desc,
-		method:  filepath.Base(method),
 	}
 	if err := pusher.Push(context.Background(), req); err != nil {
 		return err
@@ -102,7 +100,7 @@ func (x *XClient) Invoke(ctx context.Context, method string, args any, reply any
 	return errors.New("try many invoke")
 }
 
-func (x *XClient) invoke(ctx context.Context, method string, args any, reply any) (err error) {
+func (x *XClient) invoke(ctx context.Context, _ string, args any, reply any) (err error) {
 	ch, seq, err := x.newCaller()
 	if err != nil {
 		return err
@@ -112,7 +110,6 @@ func (x *XClient) invoke(ctx context.Context, method string, args any, reply any
 		timeout: x.timeout,
 		seq:     seq,
 		desc:    x.desc,
-		method:  filepath.Base(method),
 	}
 	if err := pusher.Push(context.Background(), args.(proto.Message)); err != nil {
 		x.done(seq)

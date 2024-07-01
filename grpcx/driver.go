@@ -17,6 +17,6 @@ type Client interface {
 	RemoteAddr() net.Addr
 	Register(any) error
 	Keeplive(context.Context) error
-	Go(context.Context, string, proto.Message) error
+	Go(context.Context, proto.Message) error
 	HandlerClient
 }

@@ -59,10 +59,6 @@ func (x *XClient) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (x *XClient) Call(ctx context.Context, request proto.Message) (reply proto.Message, err error) {
-	return nil, errors.New("try many request")
-}
-
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
 	pusher := &Pusher{
 		Conn:     x.Conn,

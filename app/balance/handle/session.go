@@ -2,8 +2,11 @@ package handle
 
 import (
 	"context"
+	"errors"
 	"go-driver/grpcx"
 	"go-driver/tcp"
+	"reflect"
+	"strings"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -15,16 +18,14 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
-	//reply, err := x.rpcclient.Call(context.Background(), request)
-	// if err != nil {
-	// 	return err
-	// }
-	// if loginRequest, ok := request.(*pb.LoginRequest); ok && len(x.Token) <= 0 {
-	// 	x.Token = loginRequest.Token
-	// }
-	// if err := x.tcpclient.Go(ctx, reply); err != nil {
-	// 	return err
-	// }
+	messageName := string(proto.MessageName(request).Name())
+	methodName := strings.TrimSuffix(messageName, "Request")
+	method := reflect.ValueOf(x.rpcclient).MethodByName(methodName)
+	result := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(request)})
+	if len(result) <= 0 {
+		return errors.New("len(result) <= 0")
+	}
+	x.tcpclient.Go(ctx, result[0].Interface().(proto.Message))
 	return nil
 }
 
