@@ -57,3 +57,9 @@ func (x Message) method() uint16 {
 func (x Message) payload() []byte {
 	return x[14:]
 }
+
+func (x Message) clone() Message {
+	clone := make(Message, len(x))
+	copy(clone, x)
+	return clone
+}

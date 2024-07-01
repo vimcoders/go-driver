@@ -29,7 +29,7 @@ type XClient struct {
 	seq      uint32
 	timeout  time.Duration
 	desc     grpc.ServiceDesc
-	pending  map[uint32]chan []byte
+	pending  map[uint32]chan Message
 }
 
 func Dial(network string, addr string) (Client, error) {
@@ -70,7 +70,7 @@ func newClient(c net.Conn, seq uint32) Client {
 		buffsize: 16 * 1024,
 		desc:     HandlerDesc,
 		timeout:  time.Second * 240,
-		pending:  make(map[uint32]chan []byte),
+		pending:  make(map[uint32]chan Message),
 	}
 	x.HandlerClient = pb.NewHandlerClient(x)
 	return x
@@ -119,10 +119,10 @@ func (x *XClient) invoke(ctx context.Context, _ string, args any, reply any) (er
 	case <-ctx.Done():
 		x.done(seq)
 		log.Error("invoke cancel")
-	case payload := <-ch:
+	case iMessage := <-ch:
 		close(ch)
-		if err := proto.Unmarshal(payload, reply.(proto.Message)); err != nil {
-			log.Error(payload, seq)
+		if err := proto.Unmarshal(iMessage.payload(), reply.(proto.Message)); err != nil {
+			log.Error(iMessage, seq)
 			return err
 		}
 	}
@@ -157,7 +157,7 @@ func (x *XClient) Close() error {
 	return x.Conn.Close()
 }
 
-func (x *XClient) callback(ctx context.Context, ack uint32, b Message) error {
+func (x *XClient) callback(ctx context.Context, ack uint32, clone Message) error {
 	ch := x.done(ack)
 	if ch == nil {
 		log.Errorf("%d ch == nil", ack)
@@ -166,7 +166,7 @@ func (x *XClient) callback(ctx context.Context, ack uint32, b Message) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	select {
-	case ch <- b:
+	case ch <- clone:
 	case <-timeoutCtx.Done():
 		log.Error("<-timeoutCtx.Done()")
 		close(ch)
@@ -210,7 +210,7 @@ func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 	}
 	seq, ack, payload := iMessage.seq(), iMessage.ack(), iMessage.payload()
 	if ack > 0 {
-		return x.callback(ctx, ack, payload)
+		return x.callback(ctx, ack, iMessage.clone())
 	}
 	dec := func(in any) error {
 		if err := proto.Unmarshal(payload, in.(proto.Message)); err != nil {
@@ -235,14 +235,14 @@ func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 	return nil
 }
 
-func (x *XClient) newCaller() (chan []byte, uint32, error) {
+func (x *XClient) newCaller() (chan Message, uint32, error) {
 	x.Lock()
 	defer x.Unlock()
 	seq := x.seq + 1
 	if _, ok := x.pending[seq]; ok {
 		return nil, 0, errors.New("ok")
 	}
-	done := make(chan []byte, 1)
+	done := make(chan Message, 1)
 	x.pending[seq] = done
 	switch seq {
 	case math.MaxUint32 - math.MaxUint16:
@@ -255,7 +255,7 @@ func (x *XClient) newCaller() (chan []byte, uint32, error) {
 	return done, seq, nil
 }
 
-func (x *XClient) done(seq uint32) chan []byte {
+func (x *XClient) done(seq uint32) chan Message {
 	x.Lock()
 	defer x.Unlock()
 	if v, ok := x.pending[seq]; ok {
