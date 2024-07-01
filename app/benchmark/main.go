@@ -13,8 +13,9 @@ import (
 )
 
 func main() {
+	log.Info(time.Now())
 	var count int64
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 20000; i++ {
 		client := benchmark.Client{
 			Url:      "http://127.0.0.1:9800/api/v1/passport/login",
 			CometUrl: "127.0.0.1:9600",
@@ -26,7 +27,7 @@ func main() {
 		count++
 		time.Sleep(time.Millisecond * 10)
 	}
-	log.Info(count)
+	log.Info(count, time.Now())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	ticker := time.NewTicker(time.Second)
