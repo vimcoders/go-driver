@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"go-driver/grpcx"
-	"go-driver/log"
 	"go-driver/tcp"
 	"reflect"
 	"strings"
@@ -19,7 +18,6 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
-	log.Debug(request)
 	messageName := string(proto.MessageName(request).Name())
 	methodName := strings.TrimSuffix(messageName, "Request")
 	method := reflect.ValueOf(x.rpcclient).MethodByName(methodName)
