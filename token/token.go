@@ -15,7 +15,6 @@ import (
 
 type Token struct {
 	Id          int64  `json:"id"`
-	UserName    string `json:"name"`
 	Version     string `json:"version"`
 	Passport    string `json:"passport"`
 	PhoneNumber string `json:"phone_number"`
@@ -23,9 +22,13 @@ type Token struct {
 	jwt.RegisteredClaims
 }
 
-func NewLoginToken(id int64, superUser bool, version string, key []byte) (token string, err error) {
+func GenToken(id int64, passport, phoneNumber, email string, key []byte) (token string, err error) {
 	jwtToken := &Token{
-		Version: version,
+		Id:          id,
+		Version:     "1.0",
+		Passport:    passport,
+		PhoneNumber: phoneNumber,
+		Email:       email,
 	}
 	return jwtToken.Marshal(key)
 }
