@@ -1,4 +1,4 @@
-rpcx-benchmark
+grpcx-benchmark
 
 	Processor Number i3-12100F
 	Total Cores 4
