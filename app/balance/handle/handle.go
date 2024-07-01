@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"runtime"
-	"sync"
 	"time"
 
 	"go-driver/conf"
@@ -26,7 +25,6 @@ type Handle struct {
 	*conf.Conf
 	total uint64
 	unix  int64
-	sync.RWMutex
 	pb.UnimplementedHandlerServer
 }
 
@@ -74,8 +72,6 @@ func (x *Handle) DialLogic() error {
 }
 
 func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	x.Lock()
-	defer x.Unlock()
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {

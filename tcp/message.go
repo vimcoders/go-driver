@@ -81,6 +81,7 @@ func (x *Pusher) Push(_ context.Context, iMessage proto.Message) error {
 		if _, err := x.Conn.Write(b); err != nil {
 			return err
 		}
+		return nil
 	}
 	return fmt.Errorf("%s not registered", messageName)
 }

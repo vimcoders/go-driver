@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"go-driver/driver"
+	"go-driver/log"
 	"go-driver/pb"
 
 	"google.golang.org/protobuf/proto"
 )
 
 func (x *Handle) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	log.Debug(req)
 	return &pb.LoginResponse{Code: http.StatusOK}, nil
 }
 

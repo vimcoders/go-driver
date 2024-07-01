@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-driver/driver"
-	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/tcp"
 	"io"
 	"math/rand"
-	"net"
 	"net/http"
 
 	"google.golang.org/protobuf/proto"
@@ -62,12 +60,16 @@ func (x *Client) Register() error {
 	return nil
 }
 
+func (x *Client) ServeTCP(ctx context.Context, request proto.Message) error {
+	return nil
+}
+
 func (x *Client) Login() error {
-	conn, err := net.Dial("tcp", x.CometUrl)
-	if err != nil {
-		log.Error(err.Error())
-		return err
-	}
+	// conn, err := net.Dial("tcp", x.CometUrl)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// 	return err
+	// }
 	// conn, err := quicx.Dial(x.CometUrl, &tls.Config{
 	// 	InsecureSkipVerify: true,
 	// 	NextProtos:         []string{"quic-echo-example"},
@@ -80,7 +82,13 @@ func (x *Client) Login() error {
 	// 	log.Error(err.Error())
 	// 	return err
 	// }
-	x.tcpclient = tcp.NewClient(conn)
+	tcpclient, err := tcp.Dial(x.CometUrl)
+	if err != nil {
+		return err
+	}
+	tcpclient.Register(x)
+	go tcpclient.Keeplive(context.Background())
+	x.tcpclient = tcpclient
 	if err := x.Register(); err != nil {
 		return err
 	}
