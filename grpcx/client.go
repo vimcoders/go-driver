@@ -122,7 +122,7 @@ func (x *XClient) invoke(ctx context.Context, _ string, args any, reply any) (er
 	case payload := <-ch:
 		close(ch)
 		if err := proto.Unmarshal(payload, reply.(proto.Message)); err != nil {
-			log.Error(payload)
+			log.Error(payload, seq)
 			return err
 		}
 	}
