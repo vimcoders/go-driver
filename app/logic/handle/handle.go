@@ -3,7 +3,6 @@ package handle
 import (
 	"context"
 	"errors"
-	"math"
 	"net"
 	"reflect"
 	"runtime"
@@ -59,7 +58,7 @@ func MakeHandler(opt *conf.Conf) *Handle {
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := grpcx.NewClient(conn, math.MaxUint32/2)
+	cli := grpcx.NewClient(conn)
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}

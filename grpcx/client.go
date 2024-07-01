@@ -3,7 +3,9 @@ package grpcx
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"math"
 	"net"
 	"path/filepath"
@@ -12,6 +14,7 @@ import (
 
 	"go-driver/log"
 	"go-driver/pb"
+	"go-driver/quicx"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -30,7 +33,37 @@ type XClient struct {
 	pending  map[uint32]chan []byte
 }
 
-func NewClient(c net.Conn, seq uint32) Client {
+func Dial(network string, addr string) (Client, error) {
+	switch network {
+	case "udp":
+		conn, err := quicx.Dial(addr, &tls.Config{
+			InsecureSkipVerify: true,
+			NextProtos:         []string{"quic-echo-example"},
+			MaxVersion:         tls.VersionTLS13,
+		}, &quicx.Config{
+			MaxIdleTimeout: time.Minute,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return newClient(conn, 0), nil
+	case "tcp":
+		fallthrough
+	case "tcp4":
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return nil, err
+		}
+		return newClient(conn, 0), nil
+	}
+	return nil, fmt.Errorf("%s unkonw", network)
+}
+
+func NewClient(c net.Conn) Client {
+	return newClient(c, math.MaxUint32/2)
+}
+
+func newClient(c net.Conn, seq uint32) Client {
 	x := &XClient{
 		Conn:     c,
 		tryCount: 3,
@@ -88,7 +121,7 @@ func (x *XClient) invoke(ctx context.Context, method string, args any, reply any
 	select {
 	case <-ctx.Done():
 		x.done(seq)
-		log.Error("invoke timeout")
+		log.Error("invoke cancel")
 	case payload := <-ch:
 		close(ch)
 		if err := proto.Unmarshal(payload, reply.(proto.Message)); err != nil {
