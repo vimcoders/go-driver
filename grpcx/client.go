@@ -120,7 +120,6 @@ func (x *XClient) invoke(ctx context.Context, _ string, args any, reply any) (er
 		x.done(seq)
 		log.Error("invoke cancel")
 	case iMessage := <-ch:
-		close(ch)
 		if err := proto.Unmarshal(iMessage.payload(), reply.(proto.Message)); err != nil {
 			log.Error(iMessage, seq)
 			return err
@@ -169,7 +168,6 @@ func (x *XClient) callback(ctx context.Context, ack uint32, clone Message) error
 	case ch <- clone:
 	case <-timeoutCtx.Done():
 		log.Error("<-timeoutCtx.Done()")
-		close(ch)
 	}
 	return nil
 }
