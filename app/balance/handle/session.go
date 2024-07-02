@@ -7,6 +7,7 @@ import (
 	"go-driver/tcp"
 	"reflect"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -18,10 +19,12 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
 	messageName := string(proto.MessageName(request).Name())
 	methodName := strings.TrimSuffix(messageName, "Request")
 	method := reflect.ValueOf(x.rpcclient).MethodByName(methodName)
-	result := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(request)})
+	result := method.Call([]reflect.Value{reflect.ValueOf(timeoutCtx), reflect.ValueOf(request)})
 	if len(result) <= 0 {
 		return errors.New("len(result) <= 0")
 	}
