@@ -197,20 +197,20 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		if err := x.handle(ctx, iMessage); err != nil {
+		if err := x.handle(ctx, iMessage.clone()); err != nil {
 			return err
 		}
 	}
 }
 
-func (x *XClient) handle(ctx context.Context, iMessage Message) error {
-	method := iMessage.method()
+func (x *XClient) handle(ctx context.Context, clone Message) error {
+	method := clone.method()
 	if method >= uint16(len(x.desc.Methods)) {
 		return errors.New("kind >= len(x.desc.Methods)")
 	}
-	seq, ack, payload := iMessage.seq(), iMessage.ack(), iMessage.payload()
+	seq, ack, payload := clone.seq(), clone.ack(), clone.payload()
 	if ack > 0 {
-		return x.callback(ctx, ack, iMessage.clone())
+		return x.callback(ctx, ack, clone)
 	}
 	dec := func(in any) error {
 		if err := proto.Unmarshal(payload, in.(proto.Message)); err != nil {

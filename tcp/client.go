@@ -42,14 +42,15 @@ func (x *XClient) Register(h interface{}) error {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
+	//ticker := time.NewTicker(time.Second)
+	//for range ticker.C {
+	for {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
 			return err
 		}
 	}
-	return nil
+	//return nil
 }
 
 func (x *XClient) Ping(ctx context.Context) error {

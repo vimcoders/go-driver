@@ -50,10 +50,6 @@ func (x Message) kind() uint16 {
 	return binary.BigEndian.Uint16(x[4:])
 }
 
-func (x Message) reply() uint16 {
-	return x.kind() + 1
-}
-
 // 从数据流中获取包体
 func (x Message) message() []byte {
 	return x[6:]
