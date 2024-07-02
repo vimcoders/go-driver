@@ -42,15 +42,14 @@ func (x *XClient) Register(h interface{}) error {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	//ticker := time.NewTicker(time.Second)
-	//for range ticker.C {
-	for {
+	ticker := time.NewTicker(time.Millisecond)
+	for range ticker.C {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
 			return err
 		}
 	}
-	//return nil
+	return nil
 }
 
 func (x *XClient) Ping(ctx context.Context) error {
@@ -82,21 +81,22 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
+	ticker := time.NewTicker(time.Millisecond * 100)
 	buffer := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
-		default:
+		case <-ticker.C:
+			if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
+				return err
+			}
+			message, err := decode(buffer)
+			if err != nil {
+				return err
+			}
+			x.handle(ctx, message)
 		}
-		if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
-			return err
-		}
-		message, err := decode(buffer)
-		if err != nil {
-			return err
-		}
-		x.handle(ctx, message)
 	}
 }
 
