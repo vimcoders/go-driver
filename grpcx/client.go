@@ -120,6 +120,9 @@ func (x *XClient) invoke(ctx context.Context, _ string, args any, reply any) (er
 		x.done(seq)
 		log.Error("invoke cancel")
 	case iMessage := <-ch:
+		if iMessage == nil {
+			return errors.New("iMessage == nil")
+		}
 		if err := proto.Unmarshal(iMessage.payload(), reply.(proto.Message)); err != nil {
 			log.Error(iMessage, seq)
 			return err
