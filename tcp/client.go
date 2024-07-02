@@ -7,7 +7,6 @@ import (
 	"go-driver/log"
 	"go-driver/pb"
 	"net"
-	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -16,7 +15,6 @@ import (
 type XClient struct {
 	Handler Handler
 	net.Conn
-	sync.RWMutex
 	Buffsize uint16
 	Timeout  time.Duration
 	messages []proto.Message
@@ -94,25 +92,19 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			if err := x.handle(ctx, iMessage); err != nil {
+			req, err := x.new(iMessage.kind())
+			if err != nil {
 				return err
 			}
+			if err := proto.Unmarshal(iMessage.message(), req); err != nil {
+				return err
+			}
+			if err := x.Handler.ServeTCP(ctx, req); err != nil {
+				return err
+			}
+			return nil
 		}
 	}
-}
-
-func (x *XClient) handle(ctx context.Context, iMessage Message) (err error) {
-	req, err := x.new(iMessage.kind())
-	if err != nil {
-		return err
-	}
-	if err := proto.Unmarshal(iMessage.message(), req); err != nil {
-		return err
-	}
-	if err := x.Handler.ServeTCP(ctx, req); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (x *XClient) new(kind uint16) (proto.Message, error) {
