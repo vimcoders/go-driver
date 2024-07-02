@@ -11,11 +11,11 @@ import (
 	"encoding/pem"
 	"flag"
 	"math/big"
-	"net"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"go-driver/app/balance/handle"
 	"go-driver/conf"
@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(1)
+	runtime.GOMAXPROCS(3)
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./comet.conf", "comet.conf")
 	ymalBytes, err := os.ReadFile(fileName)
@@ -38,21 +38,21 @@ func main() {
 		panic(err.Error())
 	}
 	handler := handle.MakeHandler(opt)
-	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
-	if err != nil {
-		panic(err)
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	// tcpAddr := listener.Addr().(*net.TCPAddr)
-	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
+	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	// if err != nil {
 	// 	panic(err)
 	// }
+	// listener, err := net.ListenTCP("tcp", addr)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// tcpAddr := listener.Addr().(*net.TCPAddr)
+	listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
+		MaxIdleTimeout: time.Minute,
+	})
+	if err != nil {
+		panic(err)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go quicx.ListenAndServe(ctx, listener, handler)
