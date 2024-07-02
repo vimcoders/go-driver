@@ -42,7 +42,7 @@ func (x *XClient) Register(h interface{}) error {
 }
 
 func (x *XClient) Keeplive(ctx context.Context) error {
-	ticker := time.NewTicker(time.Millisecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 1)
 	for range ticker.C {
 		if err := x.Ping(ctx); err != nil {
 			log.Error(err.Error())
@@ -81,7 +81,7 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	ticker := time.NewTicker(time.Millisecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 1)
 	buffer := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
 	for {
 		select {
