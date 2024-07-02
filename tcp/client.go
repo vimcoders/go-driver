@@ -14,7 +14,7 @@ import (
 )
 
 type XClient struct {
-	Handler interface{}
+	Handler Handler
 	net.Conn
 	sync.RWMutex
 	Buffsize uint16
@@ -32,7 +32,7 @@ func NewClient(c net.Conn) Client {
 	return x
 }
 
-func (x *XClient) Register(h interface{}) error {
+func (x *XClient) Register(h Handler) error {
 	if x.Handler != nil {
 		return errors.New("x.Handler != nil")
 	}
@@ -81,40 +81,36 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			log.Error(err.Error())
 		}
 	}()
-	ticker := time.NewTicker(time.Millisecond * 1)
-	buffer := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
+	buf := bufio.NewReaderSize(x.Conn, int(x.Buffsize))
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("shutdown")
-		case <-ticker.C:
+		default:
 			if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 				return err
 			}
-			message, err := decode(buffer)
+			iMessage, err := decode(buf)
 			if err != nil {
 				return err
 			}
-			if err := x.handle(ctx, message); err != nil {
+			if err := x.handle(ctx, iMessage); err != nil {
 				return err
 			}
 		}
 	}
 }
 
-func (x *XClient) handle(ctx context.Context, message Message) (err error) {
-	req, err := x.new(message.kind())
+func (x *XClient) handle(ctx context.Context, iMessage Message) (err error) {
+	req, err := x.new(iMessage.kind())
 	if err != nil {
 		return err
 	}
-	if err := proto.Unmarshal(message.message(), req); err != nil {
+	if err := proto.Unmarshal(iMessage.message(), req); err != nil {
 		return err
 	}
-	if h, ok := x.Handler.(Handler); ok {
-		if err := h.ServeTCP(ctx, req); err != nil {
-			return err
-		}
-		return nil
+	if err := x.Handler.ServeTCP(ctx, req); err != nil {
+		return err
 	}
 	return nil
 }

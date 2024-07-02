@@ -14,11 +14,11 @@ type Client interface {
 	Go(context.Context, proto.Message) error
 	Close() error
 	RemoteAddr() net.Addr
-	Ping(ctx context.Context) (err error)
-	Register(interface{}) error
-	Keeplive(ctx context.Context) error
+	Ping(context.Context) (err error)
+	Register(Handler) error
+	Keeplive(context.Context) error
 }
 
 type Handler interface {
-	ServeTCP(ctx context.Context, req proto.Message) error
+	ServeTCP(context.Context, proto.Message) error
 }

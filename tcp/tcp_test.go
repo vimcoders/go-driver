@@ -36,8 +36,8 @@ func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	cli.Register(x)
 }
 
-func (x *Handler) ServeTCP(ctx context.Context, req, reply proto.Message) error {
-	log.Debug(req, reply, "ServeTCP")
+func (x *Handler) ServeTCP(ctx context.Context, req proto.Message) error {
+	log.Debug(req, "ServeTCP")
 	return nil
 }
 
@@ -64,14 +64,13 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkTCP(b *testing.B) {
-	var handler interface{}
 	conn, err := net.Dial("tcp", ":18888")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	cli := tcp.NewClient(conn)
-	cli.Register(handler)
+	cli.Register(MakeHandler())
 	for i := 0; i < b.N; i++ {
 		cli.Go(context.Background(), &pb.LoginRequest{Token: "token"})
 	}
