@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -25,5 +26,13 @@ func main() {
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	<-quit
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-quit:
+			return
+		case <-ticker.C:
+			log.Debug("NumGoroutine", runtime.NumGoroutine())
+		}
+	}
 }
