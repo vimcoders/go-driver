@@ -95,17 +95,14 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			x.handle(ctx, message)
+			if err := x.handle(ctx, message); err != nil {
+				return err
+			}
 		}
 	}
 }
 
 func (x *XClient) handle(ctx context.Context, message Message) (err error) {
-	defer func() {
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}()
 	req, err := x.new(message.kind())
 	if err != nil {
 		return err
