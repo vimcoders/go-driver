@@ -28,7 +28,9 @@ func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
 	if len(result) <= 0 {
 		return errors.New("len(result) <= 0")
 	}
-	x.tcpclient.Go(ctx, result[0].Interface().(proto.Message))
+	if err := x.tcpclient.Go(ctx, result[0].Interface().(proto.Message)); err != nil {
+		return err
+	}
 	return nil
 }
 
