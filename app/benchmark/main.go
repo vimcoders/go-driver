@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	for {
