@@ -3,16 +3,18 @@ package benchmark
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"go-driver/driver"
 	"go-driver/log"
 	"go-driver/pb"
+	"go-driver/quicx"
 	"go-driver/tcp"
 	"io"
 	"math/rand"
-	"net"
 	"net/http"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -67,19 +69,14 @@ func (x *Client) ServeTCP(ctx context.Context, request proto.Message) error {
 }
 
 func (x *Client) Login() error {
-	// conn, err := net.Dial("tcp", x.CometUrl)
-	// if err != nil {
-	// 	log.Error(err.Error())
-	// 	return err
-	// }
-	// conn, err := quicx.Dial(x.CometUrl, &tls.Config{
-	// 	InsecureSkipVerify: true,
-	// 	NextProtos:         []string{"quic-echo-example"},
-	// 	MaxVersion:         tls.VersionTLS13,
-	// }, &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
-	conn, err := net.Dial("tcp", x.CometUrl)
+	conn, err := quicx.Dial(x.CometUrl, &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"quic-echo-example"},
+		MaxVersion:         tls.VersionTLS13,
+	}, &quicx.Config{
+		MaxIdleTimeout: time.Minute,
+	})
+	//conn, err := net.Dial("tcp", x.CometUrl)
 	if err != nil {
 		log.Error(err.Error())
 		return err

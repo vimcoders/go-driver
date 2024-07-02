@@ -11,11 +11,11 @@ import (
 	"encoding/pem"
 	"flag"
 	"math/big"
-	"net"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"go-driver/app/balance/handle"
 	"go-driver/conf"
@@ -38,18 +38,15 @@ func main() {
 		panic(err.Error())
 	}
 	handler := handle.MakeHandler(opt)
-	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
-	if err != nil {
-		panic(err)
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
+	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// listener, err := net.ListenTCP("tcp", addr)
 	// tcpAddr := listener.Addr().(*net.TCPAddr)
-	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
+	listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
+		MaxIdleTimeout: time.Minute,
+	})
 	if err != nil {
 		panic(err)
 	}
