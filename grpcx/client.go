@@ -68,6 +68,7 @@ func newClient(c net.Conn, desc grpc.ServiceDesc) Client {
 
 func (x *XClient) Keeplive(ctx context.Context, ping proto.Message) error {
 	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
