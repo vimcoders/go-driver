@@ -25,6 +25,9 @@ func decode(b *bufio.Reader) (Message, error) {
 	if err != nil {
 		return nil, err
 	}
+	if _, err := b.Discard(len(request)); err != nil {
+		return nil, err
+	}
 	return request, nil
 }
 
@@ -49,7 +52,7 @@ func (x Message) kind() uint16 {
 }
 
 // 从数据流中获取包体
-func (x Message) message() []byte {
+func (x Message) payload() []byte {
 	return x[6:]
 }
 

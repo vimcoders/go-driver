@@ -107,26 +107,13 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			req, err := x.new(iMessage.kind())
-			if err != nil {
-				return err
-			}
-			if err := proto.Unmarshal(iMessage.message(), req); err != nil {
+			req := x.messages[iMessage.kind()].ProtoReflect().New().Interface()
+			if err := proto.Unmarshal(iMessage.payload(), req); err != nil {
 				return fmt.Errorf("%s %v", err.Error(), iMessage)
 			}
 			if err := x.Handler.ServeTCP(ctx, req); err != nil {
 				return err
 			}
-			if _, err := buf.Discard(len(iMessage)); err != nil {
-				return err
-			}
 		}
 	}
-}
-
-func (x *XClient) new(kind uint16) (proto.Message, error) {
-	if kind >= uint16(len(x.messages)) {
-		return nil, errors.New("kind >= uint16(len(x.messages))")
-	}
-	return x.messages[kind].ProtoReflect().New().Interface(), nil
 }
