@@ -57,16 +57,32 @@ func (x *XClient) Ping(ctx context.Context) error {
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
-	pusher := &Pusher{
-		Conn:     x.Conn,
-		timeout:  x.Timeout,
-		messages: x.messages,
-	}
-	return pusher.Push(context.Background(), request)
+	return x.push(context.Background(), request)
 }
 
 func (x *XClient) Close() error {
 	return x.Conn.Close()
+}
+
+func (x *XClient) push(_ context.Context, iMessage proto.Message) error {
+	messageName := proto.MessageName(iMessage).Name()
+	for i := uint16(0); i < uint16(len(x.messages)); i++ {
+		if messageName != proto.MessageName(x.messages[i]).Name() {
+			continue
+		}
+		b, err := encode(i, iMessage)
+		if err != nil {
+			return err
+		}
+		if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
+			return err
+		}
+		if _, err := b.WriteTo(x.Conn); err != nil {
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("%s not registered", messageName)
 }
 
 func (x *XClient) pull(ctx context.Context) (err error) {
