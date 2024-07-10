@@ -1,0 +1,21 @@
+syntax = "proto3";
+package pb;
+option go_package = "../pb";
+import "login.proto";
+
+message PingRequest {
+	bytes Message = 1;
+}
+
+message PingResponse {
+	bytes Message = 1;
+}
+
+service Handler {
+	rpc Ping(PingRequest) returns (PingResponse) {}
+	rpc Login(LoginRequest) returns (LoginResponse) {}
+}
+
+// protoc --go_out=. --go-grpc_out=. *.proto
+// go install google.golang.org/protobuf/cmd/protoc-gen-go
+// go install google.golang.org/grpc/cmd/protoc-gen-go-grpc

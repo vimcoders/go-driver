@@ -1,0 +1,11 @@
+syntax = "proto3";
+package pb;
+option go_package = "../pb";
+
+message LoginRequest {
+	string Token = 1;
+}
+
+message LoginResponse {
+	int32 Code = 1;
+}
