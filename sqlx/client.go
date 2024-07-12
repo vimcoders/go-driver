@@ -10,6 +10,7 @@ type Client interface {
 	Register(...interface{}) error
 	Insert(...interface{}) error
 	Delete(...interface{}) error
+	Query(interface{}) error
 	Update(...interface{}) error
 	Where(query string, args ...interface{}) Query
 	Close() error
