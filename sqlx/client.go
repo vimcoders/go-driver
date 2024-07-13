@@ -70,8 +70,8 @@ func (x *XClient) Delete(values ...interface{}) (err error) {
 	return nil
 }
 
-func (x *XClient) Query(result interface{}) error {
-	if tx := x.Find(result); tx.Error != nil {
+func (x *XClient) Query(dest interface{}) error {
+	if tx := x.Find(dest); tx.Error != nil {
 		return tx.Error
 	}
 	return nil
