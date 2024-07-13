@@ -12,7 +12,7 @@ type Client interface {
 	Delete(...interface{}) error
 	Query(interface{}) error
 	Update(...interface{}) error
-	Where(query string, args ...interface{}) Client
+	Where(string, ...interface{}) Client
 	Close() error
 }
 
