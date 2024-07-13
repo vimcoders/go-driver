@@ -22,9 +22,10 @@ func BenchmarkQuery(b *testing.B) {
 		return
 	}
 	for i := 0; i < b.N; i++ {
-		query := client.Where("user_id", rand.Uint64())
-		var account Account
-		if err := query.Query(&account); err != nil {
+		account := &Account{
+			UserId: uint64(rand.Uint32()),
+		}
+		if err := client.Query(&account); err != nil {
 			b.Error(err)
 			return
 		}
@@ -71,8 +72,13 @@ func BenchmarkDelete(b *testing.B) {
 		return
 	}
 	for i := 0; i < b.N; i++ {
-		delete := client.Where("user_id", rand.Uint64())
-		if err := delete.Delete(&Account{}); err != nil {
+		account := Account{
+			UserId:   uint64(rand.Uint32()),
+			Passport: fmt.Sprintf("%d", rand.Int63()),
+			Pwd:      fmt.Sprintf("%d", rand.Int63()),
+			Created:  time.Now(),
+		}
+		if err := client.Delete(&account); err != nil {
 			b.Error(err)
 			return
 		}
@@ -94,12 +100,12 @@ func BenchmarkUpdate(b *testing.B) {
 	}
 	for i := 0; i < b.N; i++ {
 		account := &Account{
+			UserId:   uint64(rand.Uint32()),
 			Passport: fmt.Sprintf("%d", rand.Int63()),
 			Pwd:      fmt.Sprintf("%d", rand.Int63()),
 			Created:  time.Now(),
 		}
-		update := client.Where("user_id", i)
-		if err := update.Update(account); err != nil {
+		if err := client.Update(account); err != nil {
 			b.Error(err)
 			return
 		}
