@@ -12,19 +12,15 @@ type Client interface {
 	Delete(...interface{}) error
 	Query(interface{}) error
 	Update(...interface{}) error
-	Where(query string, args ...interface{}) Query
+	Where(query string, args ...interface{}) Client
 	Close() error
-}
-
-type Query interface {
-	Query(interface{}) error
 }
 
 type XClient struct {
 	*gorm.DB
 }
 
-func (x *XClient) Where(query string, args ...interface{}) Query {
+func (x *XClient) Where(query string, args ...interface{}) Client {
 	return &XClient{DB: x.DB.Where(query, args...)}
 }
 
