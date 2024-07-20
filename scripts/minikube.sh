@@ -20,5 +20,9 @@ docker tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/kicbase/stable:v0
 ctr images pull swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/kicbase/stable:v0.0.44
 ctr images tag  swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/kicbase/stable:v0.0.44  docker.io/kicbase/stable:v0.0.44
 # 使用docker启动
-minikube start --driver=docker
+minikube start --image-mirror-country=cn --driver=docker
+# minikube 载入镜像
+minikube image load mysql
+# minikube 部署镜像
+kubectl apply -f mysql-k8s.yaml
 
