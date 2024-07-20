@@ -28,8 +28,12 @@ kind: Service # 表明是Kubernetes Service
 metadata:
   name: mysql # Service 的全局唯一名称
 spec:
-  type: NodePort
+  type: NodePort     # service的类型，指定service的访问方式，默认ClusterIP。
+      # ClusterIP类型：虚拟的服务ip地址，用于k8s集群内部的pod访问，在Node上kube-porxy通过设置的iptables规则进行转发
+      # NodePort类型：使用宿主机端口，能够访问各个Node的外部客户端通过Node的IP和端口就能访问服务器
+      # LoadBalancer类型：使用外部负载均衡器完成到服务器的负载分发，需要在spec.status.loadBalancer字段指定外部负载均衡服务器的IP，并同时定义nodePort和clusterIP用于公有云环境。
   selector:
     app: mysql
   ports: # Service 提供服务的端口
-    - port: 3306 # Service 对应的Pod拥有这里定义的标签
+    - port: 13306     # 服务监听的端口号
+      targetPort: 3306     # 容器暴露的端口
