@@ -1,8 +1,8 @@
 FROM alpine:latest
-# 输出当前用户和主目录
-RUN echo "Current user is: $(whoami)" && echo "Home directory is: $(eval echo ~$(whoami))"
-WORKDIR /
+RUN cd /home
+WORKDIR /home
 COPY balance .
-EXPOSE 8080
+COPY balance.yaml .
+EXPOSE 9800
 RUN chmod +x balance
-ENTRYPOINT ["/balance --config=/balance.yaml"]
+ENTRYPOINT ["/home/balance --config=/home/balance.yaml"]

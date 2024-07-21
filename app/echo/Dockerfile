@@ -1,8 +1,7 @@
 FROM alpine:latest
-# 输出当前用户和主目录
-RUN echo "Current user is: $(whoami)" && echo "Home directory is: $(eval echo ~$(whoami))"
-WORKDIR /
+RUN cd /home
+WORKDIR /home
 COPY echo .
 EXPOSE 8080
 RUN chmod +x echo
-ENTRYPOINT ["/echo"]
+ENTRYPOINT ["/home/echo"]
