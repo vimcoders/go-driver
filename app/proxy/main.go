@@ -21,6 +21,7 @@ import (
 func main() {
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./proxy.conf", "proxy.conf")
+	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err.Error())

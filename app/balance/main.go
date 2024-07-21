@@ -28,7 +28,8 @@ import (
 func main() {
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
 	var fileName string
-	flag.StringVar(&fileName, "conf", "./comet.conf", "comet.conf")
+	flag.StringVar(&fileName, "conf", "./balance.conf", "balance.conf")
+	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err.Error())

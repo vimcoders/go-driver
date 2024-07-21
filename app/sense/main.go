@@ -19,6 +19,7 @@ import (
 func main() {
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./sense.conf", "sense.conf")
+	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err.Error())
@@ -40,13 +41,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go tcp.ListenAndServe(ctx, listener, handler)
 	log.Infof("running %s", listener.Addr().String())
-	// for i := 1; i < 10000; i++ {
-	// 	go func() {
-	// 		for {
-	// 			handler.LoginRequest()
-	// 		}
-	// 	}()
-	// }
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	<-quit

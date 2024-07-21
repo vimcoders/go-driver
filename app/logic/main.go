@@ -32,6 +32,7 @@ func main() {
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
 	var fileName string
 	flag.StringVar(&fileName, "conf", "./logic.conf", "logic.conf")
+	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		panic(err.Error())
