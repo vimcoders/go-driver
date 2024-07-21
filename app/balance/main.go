@@ -17,8 +17,8 @@ import (
 	"runtime"
 	"syscall"
 
+	"go-driver/app/balance/driver"
 	"go-driver/app/balance/handle"
-	"go-driver/conf"
 	"go-driver/log"
 	"go-driver/quicx"
 
@@ -33,12 +33,12 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	var opt conf.Conf
+	var opt driver.YAML
 	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
 		panic(err.Error())
 	}
 	handler := handle.MakeHandler(opt)
-	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	addr, err := net.ResolveTCPAddr("tcp4", opt.TCP.Port)
 	if err != nil {
 		panic(err)
 	}

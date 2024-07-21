@@ -10,9 +10,9 @@ import (
 	"runtime/debug"
 	"syscall"
 
+	"go-driver/app/proxy/driver"
 	"go-driver/app/proxy/handler"
 	"go-driver/app/proxy/router"
-	"go-driver/conf"
 	"go-driver/log"
 
 	"gopkg.in/yaml.v3"
@@ -25,13 +25,13 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	var opt conf.Conf
+	var opt driver.YAML
 	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
 		panic(err.Error())
 	}
 	handler := handler.MakeHandler(&opt)
 	srv := &http.Server{
-		Addr:    opt.Addr.Port,
+		Addr:    opt.HTTP.Port,
 		Handler: router.NewRouter(handler),
 	}
 	go func() {

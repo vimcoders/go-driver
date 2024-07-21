@@ -1,17 +1,16 @@
 package handler
 
 import (
-	"go-driver/conf"
-	"go-driver/driver"
+	"go-driver/app/proxy/driver"
 	"go-driver/sqlx"
 )
 
 type Handler struct {
-	Opt *conf.Conf
+	Opt *driver.YAML
 	sqlx.Client
 }
 
-func MakeHandler(opt *conf.Conf) *Handler {
+func MakeHandler(opt *driver.YAML) *Handler {
 	client, err := sqlx.Dial(opt.Mysql.Host)
 	if err != nil {
 		panic(err.Error())

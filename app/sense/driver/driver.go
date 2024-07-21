@@ -1,16 +1,12 @@
-package conf
+package driver
 
 type Token struct {
 	Key string `ymal:"key"`
 }
 
 type Addr struct {
-	Host string `ymal:"host"`
-	Port string `ymal:"port"`
-}
-
-func (x *Addr) String() string {
-	return x.Host + x.Port
+	Internet string `ymal:"internet"`
+	Port     string `ymal:"port"`
 }
 
 type Telegram struct {
@@ -39,8 +35,10 @@ type Mongo struct {
 	DB   string `ymal:"db"`
 }
 
-type Conf struct {
-	Addr     Addr     `yaml:"addr"`
+type YAML struct {
+	TCP      Addr     `yaml:"tcp"`
+	HTTP     Addr     `yaml:"http"`
+	QUIC     Addr     `yaml:"quic"`
 	Mysql    Mysql    `yaml:"mysql"`
 	Mongo    Mongo    `yaml:"mongo"`
 	Etcd     Etcd     `yaml:"etcd"`

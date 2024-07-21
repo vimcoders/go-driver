@@ -6,8 +6,7 @@ import (
 	"net"
 	"time"
 
-	"go-driver/conf"
-	"go-driver/driver"
+	"go-driver/app/sense/driver"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
@@ -19,13 +18,11 @@ var handler = &Handler{}
 
 type Handler struct {
 	iClient *grpcx.Client
-	driver.Marshal
-	driver.Unmarshal
-	*conf.Conf
+	*driver.YAML
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt conf.Conf) *Handler {
+func MakeHandler(opt driver.YAML) *Handler {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -65,16 +62,6 @@ func MakeHandler(opt conf.Conf) *Handler {
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	newSession := &Session{
-		iClient:   x.iClient,
-		Marshal:   x.Marshal,
-		Unmarshal: x.Unmarshal,
-		Timeout:   time.Minute * 2,
-		Header:    4,
-		Buffsize:  1024 * 4,
-		Conn:      conn,
-	}
-	go newSession.Poll(ctx)
 }
 
 func (x *Handler) LoginRequest() {

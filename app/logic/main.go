@@ -17,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"go-driver/app/logic/driver"
 	"go-driver/app/logic/handle"
-	"go-driver/conf"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
@@ -37,7 +37,7 @@ func main() {
 		panic(err.Error())
 	}
 	log.Info("READ YAML DOWN")
-	var opt conf.Conf
+	var opt driver.YAML
 	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
 		panic(err.Error())
 	}
@@ -49,7 +49,7 @@ func main() {
 	// 	panic(err)
 	// }
 	// listener, err := net.ListenTCP("tcp", addr)
-	listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
+	listener, err := quicx.Listen("udp", opt.QUIC.Port, GenerateTLSConfig(), &quicx.Config{
 		MaxIdleTimeout: time.Minute,
 	})
 	if err != nil {
@@ -57,7 +57,7 @@ func main() {
 	}
 	service := etcdx.Service{
 		Kind: "QUIC",
-		Addr: opt.Addr.String(),
+		Addr: opt.QUIC.Internet,
 	}
 	b, err := json.Marshal(service)
 	if err != nil {

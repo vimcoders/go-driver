@@ -4,49 +4,9 @@ package driver
 import (
 	"context"
 	"net"
-	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
-
-type Pool[T any] struct {
-	sync.RWMutex
-	Size int
-	buf  []T
-}
-
-func NewPool[T any](size int) *Pool[T] {
-	return &Pool[T]{
-		Size: size,
-	}
-}
-
-func (x *Pool[T]) Get() T {
-	x.Lock()
-	defer x.Unlock()
-	if len(x.buf) <= 0 {
-		var t T
-		return t
-	}
-	return x.buf[0]
-}
-
-func (x *Pool[T]) Put(t T) {
-	x.Lock()
-	defer x.Unlock()
-	if len(x.buf) >= x.Size {
-		return
-	}
-	x.buf = append(x.buf, t)
-}
-
-type Unmarshal interface {
-	Unmarshal(b []byte) (proto.Message, error)
-}
-
-type Marshal interface {
-	Marshal(i proto.Message) ([]byte, error)
-}
 
 type Handler interface {
 	Handle(ctx context.Context, conn net.Conn)

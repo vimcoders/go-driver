@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"go-driver/app/sense/driver"
 	"go-driver/app/sense/handler"
-	"go-driver/conf"
 	"go-driver/log"
 	"go-driver/tcp"
 
@@ -23,12 +23,12 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	var opt conf.Conf
+	var opt driver.YAML
 	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
 		panic(err.Error())
 	}
 	handler := handler.MakeHandler(opt)
-	addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	addr, err := net.ResolveTCPAddr("tcp4", opt.TCP.Port)
 	if err != nil {
 		panic(err)
 	}

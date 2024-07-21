@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"go-driver/conf"
+	"go-driver/app/balance/driver"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
@@ -23,13 +23,13 @@ type Handle struct {
 	rpc grpcx.Client
 	pb.UnimplementedHandlerServer
 	*etcd.Client
-	*conf.Conf
+	*driver.YAML
 	total uint64
 	unix  int64
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt conf.Conf) *Handle {
+func MakeHandler(opt driver.YAML) *Handle {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -37,7 +37,7 @@ func MakeHandler(opt conf.Conf) *Handle {
 	if err != nil {
 		panic(err.Error())
 	}
-	handler.Conf = &opt
+	handler.YAML = &opt
 	handler.Client = cli
 	if err := handler.DialLogic(); err != nil {
 		panic(err.Error())
