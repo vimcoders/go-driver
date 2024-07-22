@@ -63,7 +63,7 @@ func (x *SysLogger) Debug(a ...any) {
 }
 
 func (x *SysLogger) Debugf(format string, a ...any) {
-	x.logf(" INFO ", format, a...)
+	x.Debug(fmt.Sprintf(format, a...))
 }
 
 func (x *SysLogger) Info(a ...any) {
@@ -71,7 +71,7 @@ func (x *SysLogger) Info(a ...any) {
 }
 
 func (x *SysLogger) Infof(format string, a ...any) {
-	x.logf(" INFO ", format, a...)
+	x.Info(fmt.Sprintf(format, a...))
 }
 
 func (x *SysLogger) Error(a ...any) {
@@ -79,7 +79,7 @@ func (x *SysLogger) Error(a ...any) {
 }
 
 func (x *SysLogger) Errorf(format string, a ...any) {
-	x.logf(" ERROR ", format, a...)
+	x.Error(fmt.Sprintf(format, a...))
 }
 
 func (x *SysLogger) Warn(a ...any) {
@@ -87,27 +87,14 @@ func (x *SysLogger) Warn(a ...any) {
 }
 
 func (x *SysLogger) Warnf(format string, a ...any) {
-	x.logf(" WARN ", format, a...)
+	x.Warn(fmt.Sprintf(format, a...))
 }
 
 func (x *SysLogger) log(prefix string, a ...any) {
 	buffer := pool.Get().(*Buffer)
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
 	buffer.WriteString(prefix)
-	fmt.Fprint(buffer, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
-}
-
-func (x *SysLogger) logf(prefix, format string, a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(prefix)
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
+	x.Handler.Handle(context.Background(), fmt.Appendln(*buffer, a...))
 	buffer.Reset()
 	pool.Put(buffer)
 }
