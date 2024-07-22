@@ -77,13 +77,13 @@ func buildf(depth int, prefix string, format string, a ...any) Buffer {
 
 func build(depth int, prefix string, a ...any) Buffer {
 	var buffer Buffer
-	_, file, line, ok := runtime.Caller(depth + 1)
-	if !ok {
-		file = "???"
-	}
+	// _, file, line, ok := runtime.Caller(depth + 1)
+	// if !ok {
+	// 	file = "???"
+	// }
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(filepath.Base(file))
-	buffer.WriteString(fmt.Sprintf(":%v", line))
+	// buffer.WriteString(filepath.Base(file))
+	// buffer.WriteString(fmt.Sprintf(":%v", line))
 	buffer.WriteString(prefix)
 	fmt.Fprint(&buffer, a...)
 	buffer.WriteString("\n")
