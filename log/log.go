@@ -105,8 +105,9 @@ func (x *SysLogger) Info(a ...any) {
 
 func (x *SysLogger) Infof(format string, a ...any) {
 	buffer := buildf(1+1, " INFO ", format, a...)
-	defer pool.Put(&buffer)
 	x.Handler.Handle(context.Background(), buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Error(a ...any) {
