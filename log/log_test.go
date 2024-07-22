@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 )
 
+// go test -bench=Benchmark_Slog --benchmem
 func Benchmark_Slog(b *testing.B) {
 	logger := slog.New(slog.Default().Handler())
 	for i := 0; i < b.N; i++ {
@@ -18,6 +19,7 @@ func Benchmark_Slog(b *testing.B) {
 	}
 }
 
+// go test -bench=Benchmark_Glog --benchmem
 func Benchmark_Glog(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		glog.Info("Go is best language!")
@@ -25,6 +27,7 @@ func Benchmark_Glog(b *testing.B) {
 	glog.Flush()
 }
 
+// go test -bench=Benchmark_Syslog --benchmem
 func Benchmark_Syslog(b *testing.B) {
 	syslogger := syslog.NewSysLogger()
 	for i := 0; i < b.N; i++ {
@@ -33,6 +36,7 @@ func Benchmark_Syslog(b *testing.B) {
 	syslogger.Close()
 }
 
+// go test -bench=Benchmark_log --benchmem
 func Benchmark_log(b *testing.B) {
 	log.SetPrefix("[MyApp]")
 	log.SetOutput(os.Stdout)

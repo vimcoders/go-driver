@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -53,8 +54,14 @@ func NewSysLogger() *SysLogger {
 	}
 }
 
+var pool sync.Pool = sync.Pool{
+	New: func() any {
+		return &Buffer{}
+	},
+}
+
 func buildf(depth int, prefix string, format string, a ...any) Buffer {
-	var buffer Buffer
+	buffer := pool.Get().(*Buffer)
 	_, file, line, ok := runtime.Caller(depth + 1)
 	if !ok {
 		file = "???"
@@ -63,9 +70,9 @@ func buildf(depth int, prefix string, format string, a ...any) Buffer {
 	buffer.WriteString(filepath.Base(file))
 	buffer.WriteString(fmt.Sprintf(":%v", line))
 	buffer.WriteString(prefix)
-	fmt.Fprintf(&buffer, format, a...)
+	fmt.Fprintf(buffer, format, a...)
 	buffer.WriteString("\n")
-	return buffer
+	return *buffer
 }
 
 func build(depth int, prefix string, a ...any) Buffer {
@@ -100,6 +107,7 @@ func (x *SysLogger) Info(a ...any) {
 
 func (x *SysLogger) Infof(format string, a ...any) {
 	buffer := buildf(1+1, " INFO ", format, a...)
+	defer pool.Put(&buffer)
 	x.Handler.Handle(context.Background(), buffer)
 }
 
