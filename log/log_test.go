@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"testing"
-	"time"
 
 	syslog "go-driver/log"
 
@@ -29,8 +28,7 @@ func Benchmark_Glog(b *testing.B) {
 func Benchmark_Syslog(b *testing.B) {
 	syslogger := syslog.NewSysLogger()
 	for i := 0; i < b.N; i++ {
-		syslogger.Error("Go is best language!")
-		syslogger.Errorf("Go is best language! %d", time.Now().Unix())
+		syslogger.Info("Go is best language!")
 	}
 	syslogger.Close()
 }
