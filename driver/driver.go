@@ -3,6 +3,7 @@ package driver
 
 import (
 	"context"
+	"encoding/binary"
 	"net"
 
 	"google.golang.org/protobuf/proto"
@@ -40,4 +41,8 @@ func (b *Buffer) WriteString(s string) (int, error) {
 func (b *Buffer) WriteByte(c byte) error {
 	*b = append(*b, c)
 	return nil
+}
+
+func (x *Buffer) WriteUint32(v uint32) {
+	*x = binary.BigEndian.AppendUint32(*x, v)
 }

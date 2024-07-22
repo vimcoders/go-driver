@@ -75,6 +75,7 @@ func buildf(_ int, prefix string, format string, a ...any) Buffer {
 
 func build(_ int, prefix string, a ...any) Buffer {
 	buffer := pool.Get().(*Buffer)
+	buffer.WriteUint32(uint32(cap(*buffer)))
 	// _, file, line, ok := runtime.Caller(depth + 1)
 	// if !ok {
 	// 	file = "???"
