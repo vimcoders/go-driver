@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"runtime"
 	"sync"
 	"time"
 )
@@ -60,23 +58,8 @@ var pool sync.Pool = sync.Pool{
 	},
 }
 
-func buildf(depth int, prefix string, format string, a ...any) Buffer {
+func buildf(_ int, prefix string, format string, a ...any) Buffer {
 	buffer := pool.Get().(*Buffer)
-	_, file, line, ok := runtime.Caller(depth + 1)
-	if !ok {
-		file = "???"
-	}
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(filepath.Base(file))
-	buffer.WriteString(fmt.Sprintf(":%v", line))
-	buffer.WriteString(prefix)
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	return *buffer
-}
-
-func build(depth int, prefix string, a ...any) Buffer {
-	var buffer Buffer
 	// _, file, line, ok := runtime.Caller(depth + 1)
 	// if !ok {
 	// 	file = "???"
@@ -85,9 +68,24 @@ func build(depth int, prefix string, a ...any) Buffer {
 	// buffer.WriteString(filepath.Base(file))
 	// buffer.WriteString(fmt.Sprintf(":%v", line))
 	buffer.WriteString(prefix)
-	fmt.Fprint(&buffer, a...)
+	fmt.Fprintf(buffer, format, a...)
 	buffer.WriteString("\n")
-	return buffer
+	return *buffer
+}
+
+func build(_ int, prefix string, a ...any) Buffer {
+	buffer := pool.Get().(*Buffer)
+	// _, file, line, ok := runtime.Caller(depth + 1)
+	// if !ok {
+	// 	file = "???"
+	// }
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	// buffer.WriteString(filepath.Base(file))
+	// buffer.WriteString(fmt.Sprintf(":%v", line))
+	buffer.WriteString(prefix)
+	fmt.Fprint(buffer, a...)
+	buffer.WriteString("\n")
+	return *buffer
 }
 
 func (x *SysLogger) Debug(a ...any) {
