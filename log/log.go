@@ -59,75 +59,41 @@ var pool sync.Pool = sync.Pool{
 }
 
 func (x *SysLogger) Debug(a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" DEBUG ")
-	fmt.Fprint(buffer, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
+	x.log(" DEBUG ", a...)
 }
 
 func (x *SysLogger) Debugf(format string, a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" DEBUG ")
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
+	x.logf(" INFO ", format, a...)
 }
 
 func (x *SysLogger) Info(a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" INFO ")
-	fmt.Fprint(buffer, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
+	x.log(" INFO ", a...)
 }
 
 func (x *SysLogger) Infof(format string, a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" INFO ")
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(&buffer)
+	x.logf(" INFO ", format, a...)
 }
 
 func (x *SysLogger) Error(a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" ERROR ")
-	fmt.Fprint(buffer, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
+	x.log(" ERROR ", a...)
 }
 
 func (x *SysLogger) Errorf(format string, a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" ERROR ")
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
-	pool.Put(buffer)
+	x.logf(" ERROR ", format, a...)
 }
 
 func (x *SysLogger) Warn(a ...any) {
+	x.log(" WARN ", a...)
+}
+
+func (x *SysLogger) Warnf(format string, a ...any) {
+	x.logf(" WARN ", format, a...)
+}
+
+func (x *SysLogger) log(prefix string, a ...any) {
 	buffer := pool.Get().(*Buffer)
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" WARN ")
+	buffer.WriteString(prefix)
 	fmt.Fprint(buffer, a...)
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
@@ -135,10 +101,10 @@ func (x *SysLogger) Warn(a ...any) {
 	pool.Put(buffer)
 }
 
-func (x *SysLogger) Warnf(format string, a ...any) {
+func (x *SysLogger) logf(prefix, format string, a ...any) {
 	buffer := pool.Get().(*Buffer)
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(" WARN ")
+	buffer.WriteString(prefix)
 	fmt.Fprintf(buffer, format, a...)
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
