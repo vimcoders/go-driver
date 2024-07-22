@@ -66,7 +66,7 @@ func (x *SysLogger) Debug(a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Debugf(format string, a ...any) {
@@ -77,7 +77,7 @@ func (x *SysLogger) Debugf(format string, a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Info(a ...any) {
@@ -88,7 +88,7 @@ func (x *SysLogger) Info(a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Infof(format string, a ...any) {
@@ -110,7 +110,7 @@ func (x *SysLogger) Error(a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Errorf(format string, a ...any) {
@@ -121,7 +121,7 @@ func (x *SysLogger) Errorf(format string, a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Warn(a ...any) {
@@ -132,7 +132,7 @@ func (x *SysLogger) Warn(a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Warnf(format string, a ...any) {
@@ -143,7 +143,7 @@ func (x *SysLogger) Warnf(format string, a ...any) {
 	buffer.WriteString("\n")
 	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(&buffer)
+	pool.Put(buffer)
 }
 
 func (x *SysLogger) Close() error {
