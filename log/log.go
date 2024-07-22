@@ -58,77 +58,92 @@ var pool sync.Pool = sync.Pool{
 	},
 }
 
-func buildf(_ int, prefix string, format string, a ...any) Buffer {
+func (x *SysLogger) Debug(a ...any) {
 	buffer := pool.Get().(*Buffer)
-	// _, file, line, ok := runtime.Caller(depth + 1)
-	// if !ok {
-	// 	file = "???"
-	// }
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	// buffer.WriteString(filepath.Base(file))
-	// buffer.WriteString(fmt.Sprintf(":%v", line))
-	buffer.WriteString(prefix)
-	fmt.Fprintf(buffer, format, a...)
-	buffer.WriteString("\n")
-	return *buffer
-}
-
-func build(_ int, prefix string, a ...any) Buffer {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteUint32(uint32(cap(*buffer)))
-	// _, file, line, ok := runtime.Caller(depth + 1)
-	// if !ok {
-	// 	file = "???"
-	// }
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	// buffer.WriteString(filepath.Base(file))
-	// buffer.WriteString(fmt.Sprintf(":%v", line))
-	buffer.WriteString(prefix)
+	buffer.WriteString(" DEBUG ")
 	fmt.Fprint(buffer, a...)
 	buffer.WriteString("\n")
-	return *buffer
-}
-
-func (x *SysLogger) Debug(a ...any) {
-	buffer := build(1+1, " DEBUG ", a...)
-	x.Handler.Handle(context.Background(), buffer)
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Debugf(format string, a ...any) {
-	buffer := buildf(1+1, " DEBUG ", format, a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" DEBUG ")
+	fmt.Fprintf(buffer, format, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Info(a ...any) {
-	buffer := build(1+1, " INFO ", a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" INFO ")
+	fmt.Fprint(buffer, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Infof(format string, a ...any) {
-	buffer := buildf(1+1, " INFO ", format, a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" INFO ")
+	fmt.Fprintf(buffer, format, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
 	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Error(a ...any) {
-	buffer := build(1+1, " ERROR ", a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" ERROR ")
+	fmt.Fprint(buffer, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Errorf(format string, a ...any) {
-	buffer := buildf(1+1, " ERROR ", format, a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" ERROR ")
+	fmt.Fprintf(buffer, format, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Warn(a ...any) {
-	buffer := build(1+1, " WARN ", a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" WARN ")
+	fmt.Fprint(buffer, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Warnf(format string, a ...any) {
-	buffer := buildf(1+1, " WARN ", format, a...)
-	x.Handler.Handle(context.Background(), buffer)
+	buffer := pool.Get().(*Buffer)
+	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.WriteString(" WARN ")
+	fmt.Fprintf(buffer, format, a...)
+	buffer.WriteString("\n")
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
+	pool.Put(&buffer)
 }
 
 func (x *SysLogger) Close() error {
