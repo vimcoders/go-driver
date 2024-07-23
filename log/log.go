@@ -2,10 +2,7 @@ package log
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"sync"
-	"time"
 )
 
 var logger = NewSysLogger()
@@ -52,51 +49,48 @@ func NewSysLogger() *SysLogger {
 	}
 }
 
-var pool sync.Pool = sync.Pool{
-	New: func() any {
-		return &Buffer{}
-	},
-}
-
 func (x *SysLogger) Debug(a ...any) {
-	x.log(" DEBUG ", a...)
+	x.log(" [DEBUG] ", a...)
 }
 
 func (x *SysLogger) Debugf(format string, a ...any) {
-	x.Debug(fmt.Sprintf(format, a...))
+	x.logf(" [DEBUG] ", format, a...)
 }
 
 func (x *SysLogger) Info(a ...any) {
-	x.log(" INFO ", a...)
+	x.log(" [INFO] ", a...)
 }
 
 func (x *SysLogger) Infof(format string, a ...any) {
-	x.Info(fmt.Sprintf(format, a...))
+	x.logf(" [INFO] ", format, a...)
 }
 
 func (x *SysLogger) Error(a ...any) {
-	x.log(" ERROR ", a...)
+	x.log(" [ERROR] ", a...)
 }
 
 func (x *SysLogger) Errorf(format string, a ...any) {
-	x.Error(fmt.Sprintf(format, a...))
+	x.logf(" [ERROR] ", format, a...)
 }
 
 func (x *SysLogger) Warn(a ...any) {
-	x.log(" WARN ", a...)
+	x.log(" [WARN] ", a...)
 }
 
 func (x *SysLogger) Warnf(format string, a ...any) {
-	x.Warn(fmt.Sprintf(format, a...))
+	x.logf(" [WARN] ", format, a...)
 }
 
 func (x *SysLogger) log(prefix string, a ...any) {
-	buffer := pool.Get().(*Buffer)
-	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05 "))
-	buffer.WriteString(prefix)
-	x.Handler.Handle(context.Background(), fmt.Appendln(*buffer, a...))
+	buffer := newPrinter(prefix, a...)
+	x.Handler.Handle(context.Background(), *buffer)
 	buffer.Reset()
-	pool.Put(buffer)
+}
+
+func (x *SysLogger) logf(prefix, format string, a ...any) {
+	buffer := newPrinterf(prefix, format, a...)
+	x.Handler.Handle(context.Background(), *buffer)
+	buffer.Reset()
 }
 
 func (x *SysLogger) Close() error {
