@@ -14,7 +14,7 @@ func NewBuffer(size int) Buffer {
 	return make([]byte, size)
 }
 
-func (x *Buffer) Reset() {
+func (x *Buffer) free() {
 	*x = (*x)[:0]
 	bufferFree.Put(x)
 }

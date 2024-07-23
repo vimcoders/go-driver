@@ -84,13 +84,13 @@ func (x *SysLogger) Warnf(format string, a ...any) {
 func (x *SysLogger) log(prefix string, a ...any) {
 	buffer := newPrinter(prefix, a...)
 	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
+	buffer.free()
 }
 
 func (x *SysLogger) logf(prefix, format string, a ...any) {
 	buffer := newPrinterf(prefix, format, a...)
 	x.Handler.Handle(context.Background(), *buffer)
-	buffer.Reset()
+	buffer.free()
 }
 
 func (x *SysLogger) Close() error {
