@@ -46,7 +46,7 @@ func (x *Buffer) Appendlnf(format string, a ...any) {
 
 func newPrinter(prefix string, a ...any) *Buffer {
 	buffer := bufferFree.Get().(*Buffer)
-	buffer.Write(time.Now().Format("2006-01-02 15:04:05 "))
+	buffer.Write(time.Now().Format("2006-01-02 15:04:05"))
 	buffer.Write(prefix)
 	buffer.Appendln(a...)
 	return buffer
