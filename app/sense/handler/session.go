@@ -10,9 +10,10 @@ import (
 )
 
 type Session struct {
-	UserId uint64
+	UserId int64
+	Level  int16
 	Name   string
-	Level  uint16
+	Icon   string
 	tcp.Client
 	iClient grpcx.Client
 	s       Scene
