@@ -43,14 +43,16 @@ func main() {
 	log.Infof("running %s", listener.Addr().String())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	s := <-quit
-	switch s {
-	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
-		log.Info("os.Signal ->", s.String())
-	default:
-		log.Info("os.Signal ->", s.String())
-		return
+	for {
+		s := <-quit
+		switch s {
+		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
+			log.Info("shutdown ->", s.String())
+			cancel()
+			listener.Close()
+		default:
+			log.Info("os.Signal ->", s.String())
+			continue
+		}
 	}
-	cancel()
-	listener.Close()
 }
