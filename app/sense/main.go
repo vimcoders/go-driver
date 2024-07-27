@@ -16,7 +16,7 @@ func main() {
 	log.Info("NumCPU: ", runtime.NumCPU())
 	quit := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
-	handler := handler.MakeHandler(driver.ReadOption())
+	handler := handler.MakeHandler(driver.ParseOption())
 	go handler.ListenAndServe(ctx)
 	log.Info("sense running")
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

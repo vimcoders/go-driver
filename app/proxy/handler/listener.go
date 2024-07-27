@@ -16,8 +16,8 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 		}
 	}()
 	srv := &http.Server{
-		Addr:    x.HTTP.Port,
-		Handler: NewRouter(x),
+		Addr:    x.HTTP.Local,
+		Handler: x.NewRouter(),
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		log.Errorf("listen: %s", err.Error())

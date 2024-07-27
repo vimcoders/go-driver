@@ -23,25 +23,12 @@ func (b *Buffer) Write(s string) {
 	*b = append(*b, s...)
 }
 
-func (x *Buffer) Writeln(s string) {
-	*x = append(*x, s...)
-	*x = append(*x, '\n')
-}
-
-// func (b *Buffer) WriteByte(c byte) {
-// 	*b = append(*b, c)
-// }
-
 func (x *Buffer) WriteUint32(v uint32) {
 	*x = binary.BigEndian.AppendUint32(*x, v)
 }
 
 func (x *Buffer) Appendln(a ...any) {
 	*x = fmt.Appendln(*x, a...)
-}
-
-func (x *Buffer) Appendlnf(format string, a ...any) {
-	x.Writeln(fmt.Sprintf(format, a...))
 }
 
 func newPrinter(prefix string, a ...any) *Buffer {
@@ -53,9 +40,7 @@ func newPrinter(prefix string, a ...any) *Buffer {
 }
 
 func newPrinterf(prefix, format string, a ...any) *Buffer {
-	buffer := newPrinter(prefix)
-	buffer.Appendlnf(format, a...)
-	return buffer
+	return newPrinter(prefix, fmt.Sprintf(format, a...))
 }
 
 var bufferFree sync.Pool = sync.Pool{

@@ -28,7 +28,7 @@ type Handle struct {
 	*mongox.Mongo
 	*etcd.Client
 	Users []*driver.User
-	*driver.Option
+	driver.Option
 	total uint64
 	unix  int64
 	c     grpcx.Client
@@ -37,7 +37,7 @@ type Handle struct {
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt *driver.Option) *Handle {
+func MakeHandler(opt driver.Option) *Handle {
 	log.Info("etcd endpoints:", opt.Etcd.Endpoints)
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},

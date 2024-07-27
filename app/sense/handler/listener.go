@@ -1,14 +1,22 @@
-package handle
+package handler
 
 import (
 	"context"
+	"fmt"
 	"go-driver/log"
 	"go-driver/quicx"
 	"net"
 	"runtime"
+	"runtime/debug"
 )
 
-func (x *Handle) ListenAndServe(ctx context.Context) {
+func (x *Handler) ListenAndServe(ctx context.Context) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Error(fmt.Sprintf("%s", e))
+			debug.PrintStack()
+		}
+	}()
 	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.Local)
 	if err != nil {
 		panic(err)

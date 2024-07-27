@@ -16,7 +16,7 @@ import (
 func main() {
 	log.Info("NumCPU: ", runtime.NumCPU())
 	ctx, cancel := context.WithCancel(context.Background())
-	handler := handle.MakeHandler(driver.ReadOption())
+	handler := handle.MakeHandler(driver.ParseOption())
 	go handler.ListenAndServe(ctx)
 	log.Info("logic running")
 	quit := make(chan os.Signal, 1)

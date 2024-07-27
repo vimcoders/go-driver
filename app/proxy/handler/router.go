@@ -8,19 +8,14 @@ import (
 	"runtime/debug"
 )
 
-type Router struct {
-	trees map[string]func(w driver.Response, r *http.Request)
-}
-
-func NewRouter(handler *Handler) http.Handler {
-	return &Router{
-		trees: map[string]func(w driver.Response, r *http.Request){
-			"/api/v1/passport/login": handler.PassportLogin,
-		},
+func (x *Handler) NewRouter() http.Handler {
+	x.trees = map[string]func(w driver.Response, r *http.Request){
+		"/api/v1/passport/login": x.PassportLogin,
 	}
+	return x
 }
 
-func (x *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (x *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if e := recover(); e != nil {
 			log.Error(fmt.Sprintf("%s", e))

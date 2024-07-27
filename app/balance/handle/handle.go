@@ -23,13 +23,13 @@ type Handle struct {
 	rpc grpcx.Client
 	pb.UnimplementedHandlerServer
 	*etcd.Client
-	*driver.Option
+	driver.Option
 	total uint64
 	unix  int64
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt *driver.Option) *Handle {
+func MakeHandler(opt driver.Option) *Handle {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,

@@ -13,7 +13,7 @@ func (x *Handle) ListenAndServe(ctx context.Context) {
 	// 	panic(err)
 	// }
 	// listener, err := net.ListenTCP("tcp", addr)
-	listener, err := quicx.Listen("udp", x.QUIC.Port, GenerateTLSConfig(), &quicx.Config{
+	listener, err := quicx.Listen("udp", x.QUIC.Local, GenerateTLSConfig(), &quicx.Config{
 		MaxIdleTimeout: time.Minute,
 	})
 	if err != nil {

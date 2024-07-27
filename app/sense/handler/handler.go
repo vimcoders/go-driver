@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net"
-	"runtime"
 	"time"
 
 	"go-driver/app/sense/driver"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
-	"go-driver/quicx"
 	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -21,11 +19,11 @@ var handler = &Handler{}
 
 type Handler struct {
 	iClient grpcx.Client
-	*driver.Option
+	driver.Option
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt *driver.Option) *Handler {
+func MakeHandler(opt driver.Option) *Handler {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -73,25 +71,6 @@ func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	if err := newSession.Register(newSession); err != nil {
 		log.Error(err.Error())
 	}
-}
-
-func (x *Handler) ListenAndServe(ctx context.Context) {
-	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.Port)
-	if err != nil {
-		panic(err)
-	}
-	listener, err := net.ListenTCP("tcp", addr)
-	// tcpAddr := listener.Addr().(*net.TCPAddr)
-	// listener, err := quicx.Listen("udp", opt.Addr.Port, GenerateTLSConfig(), &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
-	if err != nil {
-		panic(err)
-	}
-	for i := 0; i < runtime.NumCPU(); i++ {
-		go quicx.ListenAndServe(ctx, listener, x)
-	}
-	log.Infof("running %s", listener.Addr().String())
 }
 
 func (x *Handler) LoginRequest() {

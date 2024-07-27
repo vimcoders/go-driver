@@ -10,7 +10,7 @@ import (
 )
 
 func Dial(host string) (Client, error) {
-	log.Debugf("host:= %s", host)
+	log.Debugf("host := %s", host)
 	db, err := gorm.Open(mysql.Open(host), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 	//db, err := gorm.Open(mysql.Open(host), &gorm.Config{})
 	if err != nil {
