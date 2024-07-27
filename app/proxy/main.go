@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,25 +13,13 @@ import (
 	"go-driver/app/proxy/handler"
 	"go-driver/app/proxy/router"
 	"go-driver/log"
-
-	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	var fileName string
-	flag.StringVar(&fileName, "conf", "./proxy.conf", "proxy.conf")
-	flag.Parse()
-	ymalBytes, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err.Error())
-	}
-	var opt driver.YAML
-	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
-		panic(err.Error())
-	}
-	handler := handler.MakeHandler(&opt)
+	option := driver.ReadOption()
+	handler := handler.MakeHandler(option)
 	srv := &http.Server{
-		Addr:    opt.HTTP.Port,
+		Addr:    option.HTTP.Port,
 		Handler: router.NewRouter(handler),
 	}
 	go func() {

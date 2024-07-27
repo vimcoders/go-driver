@@ -23,13 +23,13 @@ type Handle struct {
 	rpc grpcx.Client
 	pb.UnimplementedHandlerServer
 	*etcd.Client
-	*driver.YAML
+	*driver.Option
 	total uint64
 	unix  int64
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt driver.YAML) *Handle {
+func MakeHandler(opt *driver.Option) *Handle {
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -37,7 +37,7 @@ func MakeHandler(opt driver.YAML) *Handle {
 	if err != nil {
 		panic(err.Error())
 	}
-	handler.YAML = &opt
+	handler.Option = opt
 	handler.Client = cli
 	if err := handler.DialLogic(); err != nil {
 		panic(err.Error())

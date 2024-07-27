@@ -7,9 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
-	"flag"
 	"math/big"
 	"os"
 	"os/signal"
@@ -19,59 +17,31 @@ import (
 
 	"go-driver/app/logic/driver"
 	"go-driver/app/logic/handle"
-	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/quicx"
-
-	"github.com/google/uuid"
-	"gopkg.in/yaml.v3"
 )
 
 func main() {
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
-	var fileName string
-	flag.StringVar(&fileName, "conf", "./logic.conf", "logic.conf")
-	flag.Parse()
-	ymalBytes, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err.Error())
-	}
-	log.Info("READ YAML DOWN")
-	var opt driver.YAML
-	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
-		panic(err.Error())
-	}
+	option := driver.ReadOption()
 	log.Info("Unmarshal YAML DOWN")
-	handler := handle.MakeHandler(&opt)
+	handler := handle.MakeHandler(option)
 	defer handler.Close()
 	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	// if err != nil {
 	// 	panic(err)
 	// }
 	// listener, err := net.ListenTCP("tcp", addr)
-	listener, err := quicx.Listen("udp", opt.QUIC.Port, GenerateTLSConfig(), &quicx.Config{
+	listener, err := quicx.Listen("udp", option.QUIC.Port, GenerateTLSConfig(), &quicx.Config{
 		MaxIdleTimeout: time.Minute,
 	})
 	if err != nil {
 		panic(err)
 	}
-	service := etcdx.Service{
-		Kind: "QUIC",
-		Addr: opt.QUIC.Internet,
-	}
-	b, err := json.Marshal(service)
-	if err != nil {
-		panic(err.Error())
-	}
 	ctx, cancel := context.WithCancel(context.Background())
-	key := opt.Etcd.Version + "/service/logic/" + uuid.NewString()
-	if _, err := handler.Client.Put(ctx, key, string(b)); err != nil {
-		panic(err.Error())
-	}
-	log.Info("ETCD Put down")
 	go grpcx.ListenAndServe(ctx, listener, handler)
-	log.Infof("RUNNING %s %s", listener.Addr().String(), key)
+	log.Infof("RUNNING %s", listener.Addr().String())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	for {
@@ -79,10 +49,7 @@ func main() {
 		switch s {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
 			log.Info("shutdown ->", s.String())
-			handler.Client.Delete(ctx, key)
-			log.Info("ETCD DEL DOWN..")
 			cancel()
-			log.Info("cancel() DOWN....")
 		default:
 			log.Info("os.Signal ->", s.String())
 			continue

@@ -1,5 +1,12 @@
 package driver
 
+import (
+	"flag"
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
+
 type Token struct {
 	Key string `ymal:"key"`
 }
@@ -26,7 +33,7 @@ type Etcd struct {
 	Version   string `ymal:"version"`
 }
 
-type YAML struct {
+type Option struct {
 	TCP      Addr     `yaml:"tcp"`
 	HTTP     Addr     `yaml:"http"`
 	QUIC     Addr     `yaml:"quic"`
@@ -34,4 +41,19 @@ type YAML struct {
 	Dingding Dingding `yaml:"dingding"`
 	Telegram Telegram `yaml:"telegram"`
 	Token    Token    `yaml:"token"`
+}
+
+func ReadOption() *Option {
+	var fileName string
+	flag.StringVar(&fileName, "conf", "./logic.conf", "logic.conf")
+	flag.Parse()
+	ymalBytes, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err.Error())
+	}
+	var opt Option
+	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
+		panic(err.Error())
+	}
+	return &opt
 }

@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"flag"
 	"math/big"
 	"net"
 	"os"
@@ -21,25 +20,13 @@ import (
 	"go-driver/app/balance/handle"
 	"go-driver/log"
 	"go-driver/quicx"
-
-	"gopkg.in/yaml.v3"
 )
 
 func main() {
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
-	var fileName string
-	flag.StringVar(&fileName, "conf", "./balance.conf", "balance.conf")
-	flag.Parse()
-	ymalBytes, err := os.ReadFile(fileName)
-	if err != nil {
-		panic(err.Error())
-	}
-	var opt driver.YAML
-	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
-		panic(err.Error())
-	}
-	handler := handle.MakeHandler(opt)
-	addr, err := net.ResolveTCPAddr("tcp4", opt.TCP.Port)
+	option := driver.ReadOption()
+	handler := handle.MakeHandler(option)
+	addr, err := net.ResolveTCPAddr("tcp4", option.TCP.Port)
 	if err != nil {
 		panic(err)
 	}

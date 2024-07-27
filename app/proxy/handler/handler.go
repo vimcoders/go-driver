@@ -6,11 +6,11 @@ import (
 )
 
 type Handler struct {
-	Opt *driver.YAML
+	Opt *driver.Option
 	sqlx.Client
 }
 
-func MakeHandler(opt *driver.YAML) *Handler {
+func MakeHandler(opt *driver.Option) *Handler {
 	client, err := sqlx.Dial(opt.Mysql.Host)
 	if err != nil {
 		panic(err.Error())
