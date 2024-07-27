@@ -14,11 +14,11 @@ func main() {
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 	s := <-quit
 	switch s {
-	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
+	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
 		fmt.Println(s.String())
 		return
-	case syscall.SIGHUP:
-		fmt.Println("ctrl-c")
+	default:
+		fmt.Println(s.String())
 		return
 	}
 }

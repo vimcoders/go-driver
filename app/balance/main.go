@@ -22,17 +22,13 @@ func main() {
 	go handler.ListenAndServe(ctx)
 	log.Info("balance running")
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	for {
-		s := <-quit
-		switch s {
-		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
-			log.Info("shutdown ->", s.String())
-			handler.Close()
-			cancel()
-			return
-		default:
-			log.Info("os.Signal ->", s.String())
-			continue
-		}
+	s := <-quit
+	switch s {
+	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
+		log.Info("shutdown ->", s.String())
+		handler.Close()
+		cancel()
+	default:
+		log.Info("os.Signal ->", s.String())
 	}
 }

@@ -21,16 +21,12 @@ func main() {
 	log.Info("logic running")
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	for {
-		s := <-quit
-		switch s {
-		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
-			log.Info("shutdown ->", s.String())
-			cancel()
-			return
-		default:
-			log.Info("os.Signal ->", s.String())
-			continue
-		}
+	s := <-quit
+	switch s {
+	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
+		log.Info("shutdown ->", s.String())
+		cancel()
+	default:
+		log.Info("os.Signal ->", s.String())
 	}
 }

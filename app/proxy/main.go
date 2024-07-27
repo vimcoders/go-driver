@@ -20,17 +20,13 @@ func main() {
 	go handler.ListenAndServe(ctx)
 	log.Info("proxy running")
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
-	for {
-		s := <-quit
-		switch s {
-		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
-			log.Info("shutdown ->", s.String())
-			cancel()
-			handler.Close()
-			return
-		default:
-			log.Info("os.Signal ->", s.String())
-			continue
-		}
+	s := <-quit
+	switch s {
+	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
+		log.Info("shutdown ->", s.String())
+		cancel()
+		handler.Close()
+	default:
+		log.Info("os.Signal ->", s.String())
 	}
 }
