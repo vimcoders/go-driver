@@ -36,7 +36,7 @@ func (x *Handler) PassportLogin(w driver.Response, r *http.Request) {
 		log.Error(err.Error())
 		return
 	}
-	jwtToken, err := token.GenToken(account.UserId, request.Passport, "", "", []byte(x.Opt.Token.Key))
+	jwtToken, err := token.GenToken(account.UserId, request.Passport, "", "", []byte(x.Token.Key))
 	if err != nil {
 		log.Error(err.Error())
 		return

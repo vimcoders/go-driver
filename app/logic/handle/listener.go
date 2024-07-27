@@ -1,0 +1,23 @@
+package handle
+
+import (
+	"context"
+	"go-driver/grpcx"
+	"go-driver/quicx"
+	"time"
+)
+
+func (x *Handle) ListenAndServe(ctx context.Context) {
+	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// listener, err := net.ListenTCP("tcp", addr)
+	listener, err := quicx.Listen("udp", x.QUIC.Port, GenerateTLSConfig(), &quicx.Config{
+		MaxIdleTimeout: time.Minute,
+	})
+	if err != nil {
+		panic(err)
+	}
+	go grpcx.ListenAndServe(ctx, listener, x)
+}

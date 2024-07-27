@@ -2,6 +2,12 @@ package handle
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"math/big"
 	"net"
 	"runtime"
 	"sync"
@@ -22,7 +28,7 @@ type Handle struct {
 	*mongox.Mongo
 	*etcd.Client
 	Users []*driver.User
-	Opt   *driver.Option
+	*driver.Option
 	total uint64
 	unix  int64
 	c     grpcx.Client
@@ -47,7 +53,7 @@ func MakeHandler(opt *driver.Option) *Handle {
 	}
 	handler.Mongo = mongo
 	handler.Client = cli
-	handler.Opt = opt
+	handler.Option = opt
 	return handler
 }
 
@@ -83,4 +89,28 @@ func (x *Handle) Close() error {
 		// x.Mongo.Update(x.Users[i])
 	}
 	return nil
+}
+
+func GenerateTLSConfig() *tls.Config {
+	key, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		panic(err)
+	}
+	template := x509.Certificate{SerialNumber: big.NewInt(1)}
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+	if err != nil {
+		panic(err)
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		panic(err)
+	}
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"quic-echo-example"},
+		MaxVersion:   tls.VersionTLS13,
+	}
 }

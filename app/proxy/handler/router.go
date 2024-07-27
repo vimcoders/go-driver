@@ -1,20 +1,18 @@
-package router
+package handler
 
 import (
 	"fmt"
-	"net/http"
-	"runtime/debug"
-
-	"go-driver/app/proxy/handler"
 	"go-driver/driver"
 	"go-driver/log"
+	"net/http"
+	"runtime/debug"
 )
 
 type Router struct {
 	trees map[string]func(w driver.Response, r *http.Request)
 }
 
-func NewRouter(handler *handler.Handler) http.Handler {
+func NewRouter(handler *Handler) http.Handler {
 	return &Router{
 		trees: map[string]func(w driver.Response, r *http.Request){
 			"/api/v1/passport/login": handler.PassportLogin,

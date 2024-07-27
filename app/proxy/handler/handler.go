@@ -6,7 +6,7 @@ import (
 )
 
 type Handler struct {
-	Opt *driver.Option
+	*driver.Option
 	sqlx.Client
 }
 
@@ -18,5 +18,5 @@ func MakeHandler(opt *driver.Option) *Handler {
 	if err := client.Register(&driver.Account{}); err != nil {
 		panic(err)
 	}
-	return &Handler{Opt: opt, Client: client}
+	return &Handler{Option: opt, Client: client}
 }
