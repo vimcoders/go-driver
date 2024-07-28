@@ -8,8 +8,8 @@ import (
 )
 
 type Service struct {
-	Kind string `json:"Kind"`
-	Addr string `json:"addr"`
+	Internet string `json:"Internet"`
+	Local    string `json:"local"`
 }
 
 type Query[T any] struct {

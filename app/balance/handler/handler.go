@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"time"
 
-	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
@@ -15,7 +14,7 @@ import (
 	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handler{}
+var handler *Handler
 var _ pb.HandlerServer = handler
 
 type Handler struct {
@@ -29,47 +28,15 @@ type Handler struct {
 
 // MakeHandler creates a Handler instance
 func MakeHandler(ctx context.Context) *Handler {
-	opt := ParseOption()
-	cli, err := etcd.New(etcd.Config{
-		Endpoints:   []string{opt.Etcd.Endpoints},
-		DialTimeout: 5 * time.Second,
-	})
-	if err != nil {
-		panic(err.Error())
+	h := &Handler{}
+	if err := h.Parse(); err != nil {
+		panic(err)
 	}
-	handler.Option = opt
-	handler.Client = cli
-	if err := handler.DialLogic(); err != nil {
-		panic(err.Error())
+	if err := h.Connect(ctx); err != nil {
+		panic(err)
 	}
+	handler = h
 	return handler
-}
-
-func (x *Handler) DialLogic() error {
-	key := x.Etcd.Version + "/service/logic"
-	response, err := etcdx.WithQuery[etcdx.Service](x.Client).Query(key)
-	if err != nil {
-		return err
-	}
-	for i := 0; i < len(response); i++ {
-		log.Info(response[i].Addr)
-		cli, err := grpcx.Dial("udp", response[i].Addr, pb.Handler_ServiceDesc)
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		if err := cli.Register(x); err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		for i := 0; i < 1; i++ {
-			go cli.Keeplive(context.Background(), &pb.PingRequest{})
-		}
-		cli.Register(x)
-		x.rpc = cli
-		return nil
-	}
-	return nil
 }
 
 func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {

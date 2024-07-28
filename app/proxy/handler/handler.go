@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+var handler *Handler
+
 type Handler struct {
 	Option
 	sqlx.Client
@@ -14,13 +16,13 @@ type Handler struct {
 }
 
 func MakeHandler(ctx context.Context) *Handler {
-	opt := ParseOption()
-	client, err := sqlx.Dial(opt.Mysql.Host)
-	if err != nil {
-		panic(err.Error())
-	}
-	if err := client.Register(&driver.Account{}); err != nil {
+	h := &Handler{}
+	if err := h.Parse(); err != nil {
 		panic(err)
 	}
-	return &Handler{Option: opt, Client: client}
+	if err := h.Connect(ctx); err != nil {
+		panic(err)
+	}
+	handler = h
+	return handler
 }

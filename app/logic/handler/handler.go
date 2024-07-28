@@ -22,11 +22,12 @@ import (
 	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handler{}
+var handler *Handler
 
 type Handler struct {
 	*mongox.Mongo
-	*etcd.Client
+	*etcd.
+		Client
 	Users []*driver.User
 	Option
 	total uint64
@@ -38,23 +39,14 @@ type Handler struct {
 
 // MakeHandler creates a Handler instance
 func MakeHandler(ctx context.Context) *Handler {
-	opt := ParseOption()
-	log.Info("etcd endpoints:", opt.Etcd.Endpoints)
-	cli, err := etcd.New(etcd.Config{
-		Endpoints:   []string{opt.Etcd.Endpoints},
-		DialTimeout: 5 * time.Second,
-	})
-	if err != nil {
-		panic(err.Error())
-	}
-	log.Info(opt.Mongo.Host, opt.Mongo.DB)
-	mongo, err := mongox.Connect(opt.Mongo.Host, opt.Mongo.DB)
-	if err != nil {
+	h := &Handler{}
+	if err := h.Parse(); err != nil {
 		panic(err)
 	}
-	handler.Mongo = mongo
-	handler.Client = cli
-	handler.Option = opt
+	if err := h.Connect(ctx); err != nil {
+		panic(err)
+	}
+	handler = h
 	return handler
 }
 

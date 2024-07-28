@@ -2,19 +2,14 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"net"
-	"time"
 
-	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/tcp"
-
-	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handler{}
+var handler *Handler
 
 type Handler struct {
 	iClient grpcx.Client
@@ -23,42 +18,14 @@ type Handler struct {
 
 // MakeHandler creates a Handler instance
 func MakeHandler(ctx context.Context) *Handler {
-	opt := ParseOption()
-	cli, err := etcd.New(etcd.Config{
-		Endpoints:   []string{opt.Etcd.Endpoints},
-		DialTimeout: 5 * time.Second,
-	})
-	if err != nil {
-		panic(err.Error())
+	h := &Handler{}
+	if err := h.Parse(); err != nil {
+		panic(err)
 	}
-	key := opt.Etcd.Version + "/service/logic"
-	response, err := cli.Get(context.Background(), key, etcd.WithPrefix())
-	if err != nil {
-		panic(err.Error())
+	if err := h.Connect(ctx); err != nil {
+		panic(err)
 	}
-	var service etcdx.Service
-	for i := 0; i < len(response.Kvs); i++ {
-		log.Info(string(response.Kvs[i].Value))
-		if err := json.Unmarshal(response.Kvs[i].Value, &service); err != nil {
-			panic(err.Error())
-		}
-	}
-	log.Info(service.Addr)
-	handler.Option = opt
-	// conn, err := quicx.Dial(service.Addr, &tls.Config{
-	// 	InsecureSkipVerify: true,
-	// 	NextProtos:         []string{"quic-echo-example"},
-	// 	MaxVersion:         tls.VersionTLS13,
-	// }, &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-	//message := &driver.Protobuf{Messages: driver.Messages}
-	//handler.Marshal = message
-	//handler.Unmarshal = message
-	//handler.iClient = rpcx.NewClient(conn)
+	handler = h
 	return handler
 }
 

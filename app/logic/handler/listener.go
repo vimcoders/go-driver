@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/quicx"
 	"time"
@@ -20,4 +22,11 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 		panic(err)
 	}
 	go grpcx.ListenAndServe(ctx, listener, x)
+	b, err := json.Marshal(&etcdx.Service{Internet: x.QUIC.Internet, Local: x.QUIC.Local})
+	if err != nil {
+		panic(err)
+	}
+	if _, err := x.Client.Put(ctx, x.Etcd.Join("logic"), string(b)); err != nil {
+		panic(err)
+	}
 }

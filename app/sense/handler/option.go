@@ -10,16 +10,16 @@ import (
 
 type Option = driver.Option
 
-func ParseOption() (opt Option) {
+func (x *Handler) Parse() error {
 	var fileName string
 	flag.StringVar(&fileName, "option", "scene.conf", "scene.conf")
 	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
-	if err := yaml.Unmarshal(ymalBytes, &opt); err != nil {
-		panic(err.Error())
+	if err := yaml.Unmarshal(ymalBytes, &x.Option); err != nil {
+		return err
 	}
-	return opt
+	return nil
 }

@@ -1,5 +1,7 @@
 package driver
 
+import "strings"
+
 type Token struct {
 	Key string `ymal:"key"`
 }
@@ -24,6 +26,10 @@ type Etcd struct {
 	UserName  string `ymal:"user_name"`
 	Passwd    string `ymal:"passwd"`
 	Version   string `ymal:"version"`
+}
+
+func (x *Etcd) Join(prefix ...string) string {
+	return x.Version + strings.Join(prefix, "/")
 }
 
 type Mysql struct {
