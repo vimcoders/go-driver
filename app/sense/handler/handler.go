@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"go-driver/app/sense/driver"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
@@ -19,11 +18,12 @@ var handler = &Handler{}
 
 type Handler struct {
 	iClient grpcx.Client
-	driver.Option
+	Option
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt driver.Option) *Handler {
+func MakeHandler(ctx context.Context) *Handler {
+	opt := ParseOption()
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,

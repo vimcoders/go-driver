@@ -9,8 +9,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/balance/driver"
-	"go-driver/app/balance/handle"
+	"go-driver/app/balance/handler"
 	"go-driver/log"
 )
 
@@ -18,7 +17,7 @@ func main() {
 	log.Info("NumCPU: ", runtime.NumCPU())
 	quit := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
-	handler := handle.MakeHandler(driver.ParseOption())
+	handler := handler.MakeHandler(ctx)
 	go handler.ListenAndServe(ctx)
 	log.Info("balance running")
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

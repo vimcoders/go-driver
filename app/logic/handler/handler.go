@@ -1,4 +1,4 @@
-package handle
+package handler
 
 import (
 	"context"
@@ -22,13 +22,13 @@ import (
 	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handle{}
+var handler = &Handler{}
 
-type Handle struct {
+type Handler struct {
 	*mongox.Mongo
 	*etcd.Client
 	Users []*driver.User
-	driver.Option
+	Option
 	total uint64
 	unix  int64
 	c     grpcx.Client
@@ -37,7 +37,8 @@ type Handle struct {
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt driver.Option) *Handle {
+func MakeHandler(ctx context.Context) *Handler {
+	opt := ParseOption()
 	log.Info("etcd endpoints:", opt.Etcd.Endpoints)
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
@@ -58,7 +59,7 @@ func MakeHandler(opt driver.Option) *Handle {
 }
 
 // Handle receives and executes redis commands
-func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
+func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
 	cli := grpcx.NewClient(conn, pb.Handler_ServiceDesc)
 	if err := cli.Register(x); err != nil {
@@ -71,7 +72,7 @@ func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	x.c = cli
 }
 
-func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
@@ -83,7 +84,7 @@ func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 }
 
 // Close stops handler
-func (x *Handle) Close() error {
+func (x *Handler) Close() error {
 	for i := 0; i < len(x.Users); i++ {
 		// x.Mongo.Insert(x.Users[i])
 		// x.Mongo.Update(x.Users[i])

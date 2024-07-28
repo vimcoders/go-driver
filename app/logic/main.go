@@ -8,15 +8,14 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/logic/driver"
-	"go-driver/app/logic/handle"
+	"go-driver/app/logic/handler"
 	"go-driver/log"
 )
 
 func main() {
 	log.Info("NumCPU: ", runtime.NumCPU())
 	ctx, cancel := context.WithCancel(context.Background())
-	handler := handle.MakeHandler(driver.ParseOption())
+	handler := handler.MakeHandler(ctx)
 	go handler.ListenAndServe(ctx)
 	log.Info("logic running")
 	quit := make(chan os.Signal, 1)

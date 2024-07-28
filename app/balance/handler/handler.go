@@ -1,4 +1,4 @@
-package handle
+package handler
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"time"
 
-	"go-driver/app/balance/driver"
 	"go-driver/etcdx"
 	"go-driver/grpcx"
 	"go-driver/log"
@@ -16,20 +15,21 @@ import (
 	etcd "go.etcd.io/etcd/client/v3"
 )
 
-var handler = &Handle{}
+var handler = &Handler{}
 var _ pb.HandlerServer = handler
 
-type Handle struct {
+type Handler struct {
 	rpc grpcx.Client
 	pb.UnimplementedHandlerServer
 	*etcd.Client
-	driver.Option
+	Option
 	total uint64
 	unix  int64
 }
 
 // MakeHandler creates a Handler instance
-func MakeHandler(opt driver.Option) *Handle {
+func MakeHandler(ctx context.Context) *Handler {
+	opt := ParseOption()
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{opt.Etcd.Endpoints},
 		DialTimeout: 5 * time.Second,
@@ -45,7 +45,7 @@ func MakeHandler(opt driver.Option) *Handle {
 	return handler
 }
 
-func (x *Handle) DialLogic() error {
+func (x *Handler) DialLogic() error {
 	key := x.Etcd.Version + "/service/logic"
 	response, err := etcdx.WithQuery[etcdx.Service](x.Client).Query(key)
 	if err != nil {
@@ -72,7 +72,7 @@ func (x *Handle) DialLogic() error {
 	return nil
 }
 
-func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	unix := time.Now().Unix()
 	x.total++
 	if unix != x.unix {
@@ -84,7 +84,7 @@ func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 }
 
 // Handle receives and executes redis commands
-func (x *Handle) Handle(ctx context.Context, c net.Conn) {
+func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
 		Client: tcp.NewClient(c),
 		rpc:    x.rpc,
@@ -93,6 +93,6 @@ func (x *Handle) Handle(ctx context.Context, c net.Conn) {
 }
 
 // Close stops handler
-func (x *Handle) Close() error {
+func (x *Handler) Close() error {
 	return nil
 }

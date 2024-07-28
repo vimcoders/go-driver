@@ -1,4 +1,4 @@
-package handle
+package handler
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (x *Handle) ListenAndServe(ctx context.Context) {
+func (x *Handler) ListenAndServe(ctx context.Context) {
 	// addr, err := net.ResolveTCPAddr("tcp4", opt.Addr.Port)
 	// if err != nil {
 	// 	panic(err)
