@@ -6,14 +6,20 @@ import (
 
 	"go-driver/grpcx"
 	"go-driver/log"
+	"go-driver/pb"
 	"go-driver/tcp"
+
+	etcd "go.etcd.io/etcd/client/v3"
 )
 
 var handler *Handler
 
 type Handler struct {
-	iClient grpcx.Client
 	Option
+	iClient grpcx.Client
+	rpc     grpcx.Client
+	pb.UnimplementedHandlerServer
+	*etcd.Client
 }
 
 // MakeHandler creates a Handler instance
