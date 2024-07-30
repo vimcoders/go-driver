@@ -12,6 +12,7 @@ type Client interface {
 	Delete(...interface{}) error
 	Query(interface{}) error
 	Update(...interface{}) error
+	Replace(values ...interface{}) (err error)
 	Where(string, ...interface{}) Client
 	Close() error
 }
@@ -90,6 +91,34 @@ func (x *XClient) Update(values ...interface{}) (err error) {
 	for i := 0; i < len(values); i++ {
 		if t := tx.Updates(values[i]); t != nil && t.Error != nil {
 			return t.Error
+		}
+	}
+	if t := tx.Commit(); t != nil && t.Error != nil {
+		return t.Error
+	}
+	return nil
+}
+
+func (x *XClient) Replace(values ...interface{}) (err error) {
+	if len(values) <= 0 {
+		return errors.New("len(values) <= 0")
+	}
+	tx := x.Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	for i := 0; i < len(values); i++ {
+		t := tx.Updates(values[i])
+		if t.RowsAffected > 0 {
+			continue
+		}
+		if t.Error != nil {
+			return err
+		}
+		if t := tx.Create(values[i]); t.Error != nil {
+			return err
 		}
 	}
 	if t := tx.Commit(); t != nil && t.Error != nil {
