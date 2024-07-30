@@ -110,14 +110,7 @@ func (x *XClient) Replace(values ...interface{}) (err error) {
 		}
 	}()
 	for i := 0; i < len(values); i++ {
-		t := tx.Updates(values[i])
-		if t.RowsAffected > 0 {
-			continue
-		}
-		if t.Error != nil {
-			return err
-		}
-		if t := tx.Create(values[i]); t.Error != nil {
+		if err := tx.Save(values[i]).Error; err != nil {
 			return err
 		}
 	}
