@@ -23,16 +23,19 @@ func NewBuffer(size int) Buffer {
 }
 
 type Handler struct {
+	messages []proto.Message
 }
 
 // MakeHandler creates a Handler instance
 func MakeHandler() *Handler {
-	return &Handler{}
+	return &Handler{
+		messages: driver.Messages,
+	}
 }
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	cli := tcp.NewClient(conn)
+	cli := tcp.NewClient(conn, tcp.Option{Messages: x.messages})
 	cli.Register(x)
 }
 
@@ -69,7 +72,7 @@ func BenchmarkTCP(b *testing.B) {
 		fmt.Println(err)
 		return
 	}
-	cli := tcp.NewClient(conn)
+	cli := tcp.NewClient(conn, tcp.Option{Messages: driver.Messages})
 	cli.Register(MakeHandler())
 	for i := 0; i < b.N; i++ {
 		cli.Go(context.Background(), &pb.LoginRequest{Token: "token"})

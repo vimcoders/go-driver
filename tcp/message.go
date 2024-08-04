@@ -13,11 +13,11 @@ type Message []byte
 
 // 数据流解密
 func decode(b *bufio.Reader) (Message, error) {
-	headerBytes, err := b.Peek(4)
+	headerBytes, err := b.Peek(2)
 	if err != nil {
 		return nil, err
 	}
-	header := binary.BigEndian.Uint32(headerBytes)
+	header := binary.BigEndian.Uint16(headerBytes)
 	if int(header) > b.Size() {
 		return nil, fmt.Errorf("header %v too long", header)
 	}
@@ -32,14 +32,14 @@ func decode(b *bufio.Reader) (Message, error) {
 }
 
 // 数据流加密
-func encode(kind uint16, message proto.Message) (Message, error) {
+func encode(seq uint16, message proto.Message) (Message, error) {
 	b, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
 	}
 	var iMessage Message
-	iMessage.WriteUint32(uint32(6 + len(b)))
-	iMessage.WriteUint16(kind)
+	iMessage.WriteUint16(uint16(4 + len(b)))
+	iMessage.WriteUint16(seq)
 	if _, err := iMessage.Write(b); err != nil {
 		return nil, err
 	}
@@ -47,13 +47,13 @@ func encode(kind uint16, message proto.Message) (Message, error) {
 }
 
 // 从数据流中获取协议号
-func (x Message) kind() uint16 {
-	return binary.BigEndian.Uint16(x[4:])
+func (x Message) req() uint16 {
+	return binary.BigEndian.Uint16(x[2:])
 }
 
 // 从数据流中获取包体
 func (x Message) payload() []byte {
-	return x[6:]
+	return x[4:]
 }
 
 func (x *Message) reset() {

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"go-driver/log"
 	"go-driver/pb"
 	"net"
@@ -14,19 +13,24 @@ import (
 )
 
 type XClient struct {
+	Option
 	Handler Handler
 	net.Conn
-	Buffsize uint16
-	Timeout  time.Duration
-	messages []proto.Message
 }
 
-func NewClient(c net.Conn) Client {
+func NewClient(c net.Conn, opt Option) Client {
+	if len(opt.Messages) <= 0 {
+		return nil
+	}
 	x := &XClient{
-		Conn:     c,
-		Buffsize: 16 * 1024,
-		Timeout:  time.Second * 240,
-		messages: messages,
+		Conn:   c,
+		Option: opt,
+	}
+	if x.Buffsize <= 0 {
+		x.Option.Buffsize = 1024
+	}
+	if x.Timeout <= 0 {
+		x.Option.Timeout = time.Minute * 2
 	}
 	return x
 }
@@ -57,32 +61,21 @@ func (x *XClient) Ping(ctx context.Context) error {
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
-	return x.push(context.Background(), request)
+	b, err := x.Marshal(request)
+	if err != nil {
+		return err
+	}
+	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
+		return err
+	}
+	if _, err := b.WriteTo(x.Conn); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (x *XClient) Close() error {
 	return x.Conn.Close()
-}
-
-func (x *XClient) push(_ context.Context, iMessage proto.Message) error {
-	messageName := proto.MessageName(iMessage).Name()
-	for i := uint16(0); i < uint16(len(x.messages)); i++ {
-		if messageName != proto.MessageName(x.messages[i]).Name() {
-			continue
-		}
-		b, err := encode(i, iMessage)
-		if err != nil {
-			return err
-		}
-		if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
-			return err
-		}
-		if _, err := b.WriteTo(x.Conn); err != nil {
-			return err
-		}
-		return nil
-	}
-	return fmt.Errorf("%s not registered", messageName)
 }
 
 func (x *XClient) pull(ctx context.Context) (err error) {
@@ -107,9 +100,9 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			req := x.messages[iMessage.kind()].ProtoReflect().New().Interface()
-			if err := proto.Unmarshal(iMessage.payload(), req); err != nil {
-				return fmt.Errorf("%s %v", err.Error(), iMessage)
+			req, err := x.Unmarshal(iMessage)
+			if err != nil {
+				return err
 			}
 			if err := x.Handler.ServeTCP(ctx, req); err != nil {
 				return err

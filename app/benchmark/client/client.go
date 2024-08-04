@@ -29,6 +29,7 @@ type Client struct {
 	CometUrl string
 	Token    string
 	tcp.Client
+	messages []proto.Message
 }
 
 func (x *Client) Register() error {
@@ -79,7 +80,7 @@ func (x *Client) Login() error {
 		log.Error(err.Error())
 		return err
 	}
-	x.Client = tcp.NewClient(conn)
+	x.Client = tcp.NewClient(conn, tcp.Option{Messages: x.messages})
 	if err := x.Register(); err != nil {
 		return err
 	}
