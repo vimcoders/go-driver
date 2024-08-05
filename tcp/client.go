@@ -85,20 +85,20 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		case <-ctx.Done():
 			return errors.New("shutdown")
 		default:
-			if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
-				return err
-			}
-			iMessage, err := decode(buf)
-			if err != nil {
-				return err
-			}
-			req, err := x.Unmarshal(iMessage)
-			if err != nil {
-				return err
-			}
-			if err := x.Handler.ServeTCP(ctx, req); err != nil {
-				return err
-			}
+		}
+		if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
+			return err
+		}
+		iMessage, err := decode(buf)
+		if err != nil {
+			return err
+		}
+		req, err := x.Unmarshal(iMessage)
+		if err != nil {
+			return err
+		}
+		if err := x.Handler.ServeTCP(ctx, req); err != nil {
+			return err
 		}
 	}
 }
