@@ -13,9 +13,8 @@ type Client interface {
 	Go(context.Context, proto.Message) error
 	Close() error
 	RemoteAddr() net.Addr
-	Ping(context.Context) (err error)
 	Register(Handler) error
-	Keeplive(context.Context) error
+	Keeplive(context.Context, proto.Message) error
 }
 
 type Handler interface {

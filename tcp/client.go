@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"go-driver/log"
-	"go-driver/pb"
 	"net"
 	"time"
 
@@ -30,7 +29,7 @@ func NewClient(c net.Conn, opt Option) Client {
 		x.Option.Buffsize = 1024
 	}
 	if x.Timeout <= 0 {
-		x.Option.Timeout = time.Minute * 2
+		x.Option.Timeout = time.Second
 	}
 	return x
 }
@@ -44,20 +43,13 @@ func (x *XClient) Register(h Handler) error {
 	return nil
 }
 
-func (x *XClient) Keeplive(ctx context.Context) error {
+func (x *XClient) Keeplive(ctx context.Context, ping proto.Message) error {
 	for {
-		if err := x.Ping(ctx); err != nil {
+		if err := x.Go(ctx, ping); err != nil {
 			log.Error(err.Error())
 			return err
 		}
 	}
-}
-
-func (x *XClient) Ping(ctx context.Context) error {
-	if err := x.Go(ctx, &pb.PingRequest{}); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {

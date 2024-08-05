@@ -90,6 +90,6 @@ func (x *Client) Login() error {
 	if err := x.Go(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
 		return err
 	}
-	go x.Keeplive(context.Background())
+	go x.Keeplive(context.Background(), &pb.PingRequest{})
 	return nil
 }

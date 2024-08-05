@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 	"testing"
 
 	"go-driver/driver"
@@ -50,7 +53,7 @@ func (x *Handler) Close() error {
 }
 
 func TestMain(m *testing.M) {
-	addr, err := net.ResolveTCPAddr("tcp4", ":18888")
+	addr, err := net.ResolveTCPAddr("tcp4", ":28888")
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +70,7 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkTCP(b *testing.B) {
-	conn, err := net.Dial("tcp", ":18888")
+	conn, err := net.Dial("tcp", ":28888")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -76,5 +79,12 @@ func BenchmarkTCP(b *testing.B) {
 	cli.Register(MakeHandler())
 	for i := 0; i < b.N; i++ {
 		cli.Go(context.Background(), &pb.LoginRequest{Token: "token"})
+	}
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	s := <-quit
+	switch s {
+	case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
+	default:
 	}
 }
