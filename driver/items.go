@@ -21,6 +21,11 @@ func (x *ItemList) Add(items ...*Item) bool {
 		}
 	}
 	for i := 0; i < len(values); i++ {
+		if values[i].Count <= 0 {
+			return false
+		}
+	}
+	for i := 0; i < len(values); i++ {
 		if ok := x.add(values[i]); !ok {
 			return false
 		}
