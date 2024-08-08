@@ -2,6 +2,7 @@
 package driver
 
 import (
+	"go-driver/mathx"
 	"math"
 )
 
@@ -12,26 +13,37 @@ type Item struct {
 
 type ItemList []*Item
 
-func (x ItemList) Add(items ...*Item) {
+func (x *ItemList) Add(items ...*Item) bool {
+	var values ItemList
 	for i := 0; i < len(items); i++ {
-		if items[i].Count <= 0 {
-			continue
+		if ok := values.add(items[i]); !ok {
+			return false
 		}
-		x.add(items[i])
 	}
+	for i := 0; i < len(values); i++ {
+		if ok := x.add(values[i]); !ok {
+			return false
+		}
+	}
+	return true
 }
 
-func (x *ItemList) add(item *Item) {
+func (x *ItemList) add(item *Item) bool {
 	for _, v := range *x {
 		if v.Id != item.Id {
 			continue
 		}
-		return
+		if count, ok := mathx.Sum(v.Count, item.Count); ok {
+			v.Count = count
+			return true
+		}
+		return false
 	}
 	*x = append(*x, &Item{
 		Id:    item.Id,
 		Count: item.Count,
 	})
+	return true
 }
 
 func (x *ItemList) Sub(items ...*Item) {
