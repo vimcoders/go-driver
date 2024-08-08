@@ -26,8 +26,7 @@ var handler *Handler
 
 type Handler struct {
 	*mongox.Mongo
-	*etcd.
-		Client
+	*etcd.Client
 	Users []*driver.User
 	Option
 	total uint64
@@ -47,7 +46,7 @@ func MakeHandler(ctx context.Context) *Handler {
 		panic(err)
 	}
 	handler = h
-	return handler
+	return h
 }
 
 // Handle receives and executes redis commands

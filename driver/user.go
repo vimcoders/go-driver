@@ -19,10 +19,10 @@ func (x *User) DocumentName() string {
 }
 
 type Role struct {
-	RoleId int64  `bson:"role_id"`
-	Level  int32  `bson:"level"`
-	Exp    int32  `bson:"exp"`
-	Name   string `bson:"name"`
-	Items  `bson:"items"`
-	Tasks  `bson:"tasks"`
+	RoleId   int64  `bson:"role_id"`
+	Level    int32  `bson:"level"`
+	Exp      int32  `bson:"exp"`
+	Name     string `bson:"name"`
+	ItemList `bson:"items"`
+	TaskList `bson:"tasks"`
 }
