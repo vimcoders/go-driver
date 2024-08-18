@@ -11,6 +11,13 @@ type Item struct {
 	Count int32 `json:"count"`
 }
 
+func (x Item) Clone() *Item {
+	return &Item{
+		Id:    x.Id,
+		Count: x.Count,
+	}
+}
+
 type ItemList []*Item
 
 func (x *ItemList) Add(items ...*Item) bool {
@@ -82,12 +89,9 @@ func (x ItemList) Get(t int32) (*Item, bool) {
 	return nil, false
 }
 
-func (x ItemList) Clone() (copy ItemList) {
+func (x ItemList) Clone() (clone ItemList) {
 	for i := 0; i < len(x); i++ {
-		copy = append(copy, &Item{
-			Id:    x[i].Id,
-			Count: x[i].Count,
-		})
+		clone = append(clone, x[i].Clone())
 	}
-	return copy
+	return clone
 }
