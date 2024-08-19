@@ -18,7 +18,7 @@ type Client interface {
 }
 
 type Handler interface {
-	ServeTCP(context.Context, proto.Message) error
+	ServeKCP(context.Context, proto.Message) error
 }
 
 type Option struct {
@@ -27,7 +27,7 @@ type Option struct {
 	Timeout  time.Duration
 }
 
-func (x *Option) Marshal(m proto.Message) (Message, error) {
+func (x *Option) encode(m proto.Message) (Message, error) {
 	messageName := string(proto.MessageName(m).Name())
 	for i := 0; i < len(x.Messages); i++ {
 		if string(proto.MessageName(x.Messages[i]).Name()) != messageName {
@@ -38,7 +38,7 @@ func (x *Option) Marshal(m proto.Message) (Message, error) {
 	return nil, nil
 }
 
-func (x *Option) Unmarshal(m Message) (proto.Message, error) {
+func (x *Option) decode(m Message) (proto.Message, error) {
 	reqestId := m.req()
 	if int(reqestId) >= len(x.Messages) {
 		return nil, errors.New("messageId >= len(x.messages)")

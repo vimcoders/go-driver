@@ -18,9 +18,6 @@ type XClient struct {
 }
 
 func NewClient(c net.Conn, opt Option) Client {
-	if len(opt.Messages) <= 0 {
-		return nil
-	}
 	x := &XClient{
 		Conn:   c,
 		Option: opt,
@@ -53,7 +50,7 @@ func (x *XClient) Keeplive(ctx context.Context, ping proto.Message) error {
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
-	b, err := x.Marshal(request)
+	b, err := x.encode(request)
 	if err != nil {
 		return err
 	}
@@ -93,11 +90,11 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		req, err := x.Unmarshal(iMessage)
+		req, err := x.decode(iMessage)
 		if err != nil {
 			return err
 		}
-		if err := x.Handler.ServeTCP(ctx, req); err != nil {
+		if err := x.Handler.ServeKCP(ctx, req); err != nil {
 			return err
 		}
 	}
