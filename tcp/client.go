@@ -53,7 +53,7 @@ func (x *XClient) Keeplive(ctx context.Context, ping proto.Message) error {
 }
 
 func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
-	b, err := x.Marshal(request)
+	b, err := x.encode(request)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
-		req, err := x.Unmarshal(iMessage)
+		req, err := x.decode(iMessage)
 		if err != nil {
 			return err
 		}
