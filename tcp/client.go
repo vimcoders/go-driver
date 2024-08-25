@@ -39,7 +39,7 @@ func (x *XClient) Register(h Handler) error {
 		return errors.New("x.Handler != nil")
 	}
 	x.Handler = h
-	go x.pull(context.Background())
+	go x.serve(context.Background())
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (x *XClient) Close() error {
 	return x.Conn.Close()
 }
 
-func (x *XClient) pull(ctx context.Context) (err error) {
+func (x *XClient) serve(ctx context.Context) (err error) {
 	defer func() {
 		if err != nil {
 			log.Error(err.Error())
