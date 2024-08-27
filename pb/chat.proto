@@ -1,0 +1,19 @@
+syntax = "proto3";
+package pb;
+option go_package = "../pb";
+
+message ChatRequest {
+	string Message = 1;
+}
+
+message ChatResponse {
+    uint32 Code = 1;
+}
+
+service Chat {
+	rpc Chat(ChatRequest) returns (ChatResponse) {}
+}
+
+// protoc --go_out=. --go-grpc_out=. *.proto
+// go install google.golang.org/protobuf/cmd/protoc-gen-go
+// go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
