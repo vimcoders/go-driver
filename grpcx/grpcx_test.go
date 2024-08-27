@@ -49,7 +49,7 @@ func MakeHandler() *Handle {
 
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
-	cli := grpcx.NewClient(conn, pb.Handler_ServiceDesc)
+	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	//go cli.Keeplive(ctx, &pb.PingRequest{})
 	cli.Register(x)
 }

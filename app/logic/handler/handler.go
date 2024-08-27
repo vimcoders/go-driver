@@ -52,7 +52,7 @@ func MakeHandler(ctx context.Context) *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := grpcx.NewClient(conn, pb.Handler_ServiceDesc)
+	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}

@@ -26,30 +26,34 @@ type Client interface {
 	Close() error
 }
 
+type Option struct {
+	buffsize    uint16
+	timeout     time.Duration
+	ServiceDesc grpc.ServiceDesc
+}
+
 type XClient struct {
+	Option
 	net.Conn
 	grpc.ClientConnInterface
 	sync.RWMutex
-	handler  any
-	buffsize uint16
-	seq      uint32
-	timeout  time.Duration
-	desc     grpc.ServiceDesc
-	pending  map[uint32]*stream
-	streams  *sync.Pool
+	handler any
+	seq     uint32
+	pending map[uint32]*stream
+	streams *sync.Pool
 }
 
-func NewClient(c net.Conn, desc grpc.ServiceDesc) Client {
-	return newClient(c, desc)
+func NewClient(c net.Conn, opt Option) Client {
+	return newClient(c, opt)
 }
 
-func newClient(c net.Conn, desc grpc.ServiceDesc) Client {
+func newClient(c net.Conn, opt Option) Client {
+	opt.buffsize = 8 * 1024
+	opt.timeout = time.Second * 60
 	x := &XClient{
-		Conn:     c,
-		buffsize: 8 * 1024,
-		desc:     desc,
-		timeout:  time.Second * 240,
-		pending:  make(map[uint32]*stream),
+		Option:  opt,
+		Conn:    c,
+		pending: make(map[uint32]*stream),
 	}
 	x.streams = &sync.Pool{
 		New: func() any {
@@ -91,13 +95,13 @@ func (x *XClient) Register(a any) error {
 		return errors.New("x.svr  != nil")
 	}
 	x.handler = a
-	go x.pull(context.Background())
+	go x.serve(context.Background())
 	return nil
 }
 
 func (x *XClient) Go(ctx context.Context, method string, req proto.Message) error {
-	for methodId := 0; methodId < len(x.desc.Methods); methodId++ {
-		if filepath.Base(method) != x.desc.Methods[methodId].MethodName {
+	for methodId := 0; methodId < len(x.ServiceDesc.Methods); methodId++ {
+		if filepath.Base(method) != x.ServiceDesc.Methods[methodId].MethodName {
 			continue
 		}
 		if err := x.push(0, uint16(methodId), req); err != nil {
@@ -109,8 +113,8 @@ func (x *XClient) Go(ctx context.Context, method string, req proto.Message) erro
 }
 
 func (x *XClient) Invoke(ctx context.Context, methodName string, req any, reply any, opts ...grpc.CallOption) (err error) {
-	for method := 0; method < len(x.desc.Methods); method++ {
-		if x.desc.Methods[method].MethodName != filepath.Base(methodName) {
+	for method := 0; method < len(x.ServiceDesc.Methods); method++ {
+		if x.ServiceDesc.Methods[method].MethodName != filepath.Base(methodName) {
 			continue
 		}
 		if err := x.invoke(ctx, uint16(method), req.(proto.Message), reply.(proto.Message)); err != nil {
@@ -153,7 +157,7 @@ func (x *XClient) push(seq uint32, method uint16, req proto.Message) (err error)
 	return nil
 }
 
-func (x *XClient) pull(ctx context.Context) (err error) {
+func (x *XClient) serve(ctx context.Context) (err error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Error(err)
@@ -187,7 +191,7 @@ func (x *XClient) pull(ctx context.Context) (err error) {
 
 func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 	method, seq, payload := iMessage.method(), iMessage.seq(), iMessage.payload()
-	if int(method) >= len(x.desc.Methods) {
+	if int(method) >= len(x.ServiceDesc.Methods) {
 		ch := x.done(seq)
 		if ch == nil {
 			return nil
@@ -207,7 +211,7 @@ func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 		}
 		return nil
 	}
-	reply, err := x.desc.Methods[method].Handler(x.handler, ctx, dec, nil)
+	reply, err := x.ServiceDesc.Methods[method].Handler(x.handler, ctx, dec, nil)
 	if err != nil {
 		return err
 	}
