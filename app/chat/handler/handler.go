@@ -57,7 +57,7 @@ func (x *Handler) parse() error {
 	return nil
 }
 
-func (x *Handler) connect(ctx context.Context) error {
+func (x *Handler) connect(_ context.Context) error {
 	log.Info(x.Etcd.Endpoints)
 	cli, err := etcd.New(etcd.Config{
 		Endpoints:   []string{x.Etcd.Endpoints},
