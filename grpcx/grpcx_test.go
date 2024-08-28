@@ -97,7 +97,7 @@ func TestMain(m *testing.M) {
 
 func BenchmarkTCP(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("tcp", "127.0.0.1:28888", pb.Handler_ServiceDesc)
+	cli, err := grpcx.Dial("tcp", "127.0.0.1:28888", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -113,7 +113,7 @@ func BenchmarkTCP(b *testing.B) {
 
 func BenchmarkQUIC(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", pb.Handler_ServiceDesc)
+	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -139,7 +139,7 @@ func BenchmarkMessage(b *testing.B) {
 
 func BenchmarkPing(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", pb.Handler_ServiceDesc)
+	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return

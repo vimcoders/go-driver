@@ -37,7 +37,7 @@ type Client struct {
 }
 
 func Dial(network string, addr string) (*Client, error) {
-	cli, err := grpcx.Dial(network, addr, pb.Handler_ServiceDesc)
+	cli, err := grpcx.Dial(network, addr, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
 	if err != nil {
 		return nil, err
 	}

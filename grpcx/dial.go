@@ -6,11 +6,9 @@ import (
 	"go-driver/quicx"
 	"net"
 	"time"
-
-	"google.golang.org/grpc"
 )
 
-func Dial(network string, addr string, desc grpc.ServiceDesc) (Client, error) {
+func Dial(network string, addr string, opt Option) (Client, error) {
 	switch network {
 	case "udp":
 		conn, err := quicx.Dial(addr, &tls.Config{
@@ -23,7 +21,7 @@ func Dial(network string, addr string, desc grpc.ServiceDesc) (Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		return newClient(conn, desc), nil
+		return newClient(conn, opt), nil
 	case "tcp":
 		fallthrough
 	case "tcp4":
@@ -31,7 +29,7 @@ func Dial(network string, addr string, desc grpc.ServiceDesc) (Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		return newClient(conn, desc), nil
+		return newClient(conn, opt), nil
 	}
 	return nil, fmt.Errorf("%s unkonw", network)
 }
