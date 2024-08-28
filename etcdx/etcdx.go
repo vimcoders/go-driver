@@ -1,6 +1,7 @@
 package etcdx
 
 type Service struct {
-	Internet string `json:"Internet"`
-	Local    string `json:"local"`
+	Kind string `json:"kind"`
+	WAN  string `json:"wan"`
+	LAN  string `json:"lan"`
 }

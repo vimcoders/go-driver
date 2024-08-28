@@ -1,14 +1,24 @@
 package driver
 
-import "strings"
+import (
+	"strings"
+)
 
 type Token struct {
 	Key string `ymal:"key"`
 }
 
 type Endpoints struct {
-	Internet string `ymal:"internet"`
-	Local    string `ymal:"local"`
+	Wan string `ymal:"wan"`
+	Lan string `ymal:"lan"`
+}
+
+func (x *Endpoints) LAN() string {
+	return x.Lan
+}
+
+func (x *Endpoints) WAN() string {
+	return x.Wan
 }
 
 type Telegram struct {
