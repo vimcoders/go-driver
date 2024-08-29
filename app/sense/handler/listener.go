@@ -17,7 +17,7 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 			debug.PrintStack()
 		}
 	}()
-	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.WAN())
+	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.Internet)
 	if err != nil {
 		panic(err)
 	}

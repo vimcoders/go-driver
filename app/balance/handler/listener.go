@@ -9,7 +9,7 @@ import (
 )
 
 func (x *Handler) ListenAndServe(ctx context.Context) {
-	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.LAN())
+	addr, err := net.ResolveTCPAddr("tcp4", x.TCP.LocalAddr)
 	if err != nil {
 		panic(err)
 	}

@@ -9,16 +9,8 @@ type Token struct {
 }
 
 type Endpoints struct {
-	Wan string `ymal:"wan"`
-	Lan string `ymal:"lan"`
-}
-
-func (x *Endpoints) LAN() string {
-	return x.Lan
-}
-
-func (x *Endpoints) WAN() string {
-	return x.Wan
+	Internet  string `ymal:"internet"`
+	LocalAddr string `ymal:"localaddr"`
 }
 
 type Telegram struct {

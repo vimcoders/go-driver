@@ -31,7 +31,7 @@ func (x *Handler) Connect(ctx context.Context) error {
 			log.Error(err.Error())
 			continue
 		}
-		client, err := grpcx.Dial("udp", service.LAN)
+		client, err := grpcx.Dial("udp", service.LocalAddr)
 		if err != nil {
 			log.Error(err.Error())
 			continue
