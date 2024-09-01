@@ -189,7 +189,7 @@ func (x *XClient) serve(ctx context.Context) (err error) {
 
 func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 	method, seq, payload := iMessage.method(), iMessage.seq(), iMessage.payload()
-	if int(method) >= len(x.ServiceDesc.Methods) {
+	if int(method) >= len(x.Methods) {
 		ch := x.done(seq)
 		if ch == nil {
 			return nil
@@ -209,7 +209,7 @@ func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 		}
 		return nil
 	}
-	reply, err := x.ServiceDesc.Methods[method].Handler(x.handler, ctx, dec, nil)
+	reply, err := x.Methods[method].Handler(x.handler, ctx, dec, nil)
 	if err != nil {
 		return err
 	}
