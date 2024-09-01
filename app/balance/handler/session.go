@@ -6,6 +6,7 @@ import (
 	"go-driver/grpcx"
 	"go-driver/tcp"
 	"io"
+	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -33,6 +34,13 @@ func (x *Message) WriteUint32(v uint32) {
 
 func (x *Message) WriteUint16(v uint16) {
 	*x = binary.BigEndian.AppendUint16(*x, v)
+}
+
+func (x *Message) reset() {
+	if cap(*x) <= 0 {
+		return
+	}
+	*x = (*x)[:0]
 }
 
 // WriteTo writes data to w until the buffer is drained or an error occurs.
@@ -69,6 +77,7 @@ type Session struct {
 	rpc        grpcx.Client
 	Token      string
 	MethodDesc []MethodDesc
+	sync.Pool
 }
 
 func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
@@ -83,13 +92,15 @@ func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
 	if err := x.rpc.Invoke(ctx, methodName, req, reply); err != nil {
 		return err
 	}
-	response, err := encode(seq, reply)
+	response, err := x.encode(seq, reply)
 	if err != nil {
 		return err
 	}
 	if _, err := x.Write(response); err != nil {
 		return err
 	}
+	response.reset()
+	x.Put(&response)
 	return nil
 }
 
@@ -98,16 +109,16 @@ func (x *Session) Close() error {
 }
 
 // 数据流加密
-func encode(seq uint16, message proto.Message) ([]byte, error) {
+func (x *Session) encode(seq uint16, message proto.Message) (Message, error) {
 	b, err := proto.Marshal(message)
 	if err != nil {
 		return nil, err
 	}
-	var iMessage Message
+	iMessage := x.Pool.Get().(*Message)
 	iMessage.WriteUint16(uint16(4 + len(b)))
 	iMessage.WriteUint16(seq)
 	if _, err := iMessage.Write(b); err != nil {
 		return nil, err
 	}
-	return iMessage, nil
+	return *iMessage, nil
 }

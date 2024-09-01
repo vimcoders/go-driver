@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"runtime"
+	"sync"
 	"time"
 
 	"go-driver/grpcx"
@@ -55,6 +56,11 @@ func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
 		Client: tcp.NewClient(c, tcp.Option{}),
 		rpc:    x.rpc,
+		Pool: sync.Pool{
+			New: func() any {
+				return &Message{}
+			},
+		},
 	}
 	newSession.Client.Register(newSession)
 }
