@@ -14,7 +14,7 @@ type Session struct {
 	tcp.Client
 	rpc        grpcx.Client
 	Token      string
-	MethodDesc []driver.MethodDesc
+	MethodDesc driver.MethodDescList
 	sync.Pool
 }
 

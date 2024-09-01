@@ -14,7 +14,22 @@ type MethodDesc struct {
 	Response   proto.Message
 }
 
-type MethodDescList []MethodDesc
+func (x MethodDesc) Clone() *MethodDesc {
+	return &MethodDesc{
+		MethodName: x.MethodName,
+		Request:    x.Request.ProtoReflect().New().Interface(),
+		Response:   x.Response.ProtoReflect().New().Interface(),
+	}
+}
+
+type MethodDescList []*MethodDesc
+
+func (x MethodDescList) Clone() (clone MethodDescList) {
+	for i := 0; i < len(x); i++ {
+		clone = append(clone, x[i].Clone())
+	}
+	return clone
+}
 
 var MethodDescs = MethodDescList{
 	{MethodName: "Ping", Request: &pb.PingRequest{}, Response: &pb.PingResponse{}},
