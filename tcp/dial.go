@@ -12,5 +12,5 @@ func Dial(addr string) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewClient(conn, Option{Messages: Messages}), nil
+	return NewClient(conn, Option{}), nil
 }

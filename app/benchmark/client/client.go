@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"go-driver/driver"
 	"go-driver/log"
-	"go-driver/pb"
 	"go-driver/tcp"
 	"io"
 	"math/rand"
 	"net"
 	"net/http"
-
-	"google.golang.org/protobuf/proto"
 )
 
 type ResponseWriter[T any] struct {
@@ -29,7 +26,7 @@ type Client struct {
 	CometUrl string
 	Token    string
 	tcp.Client
-	messages []proto.Message
+	//messages []proto.Message
 }
 
 func (x *Client) Register() error {
@@ -63,7 +60,7 @@ func (x *Client) Register() error {
 	return nil
 }
 
-func (x *Client) ServeTCP(ctx context.Context, reply proto.Message) error {
+func (x *Client) ServeTCP(ctx context.Context, reply []byte) error {
 	return nil
 }
 
@@ -80,16 +77,16 @@ func (x *Client) Login() error {
 		log.Error(err.Error())
 		return err
 	}
-	x.Client = tcp.NewClient(conn, tcp.Option{Messages: x.messages})
+	x.Client = tcp.NewClient(conn, tcp.Option{})
 	if err := x.Register(); err != nil {
 		return err
 	}
 	if err := x.Client.Register(x); err != nil {
 		return err
 	}
-	if err := x.Go(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
-		return err
-	}
-	go x.Keeplive(context.Background(), &pb.PingRequest{})
+	// if err := x.Go(context.Background(), &pb.LoginRequest{Token: x.Token}); err != nil {
+	// 	return err
+	// }
+	//go x.Keeplive(context.Background(), &pb.PingRequest{})
 	return nil
 }

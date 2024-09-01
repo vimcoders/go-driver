@@ -3,12 +3,12 @@ package tcp
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
 	"go-driver/log"
 	"net"
 	"time"
-
-	"google.golang.org/protobuf/proto"
 )
 
 type XClient struct {
@@ -18,9 +18,6 @@ type XClient struct {
 }
 
 func NewClient(c net.Conn, opt Option) Client {
-	if len(opt.Messages) <= 0 {
-		return nil
-	}
 	x := &XClient{
 		Conn:   c,
 		Option: opt,
@@ -43,24 +40,11 @@ func (x *XClient) Register(h Handler) error {
 	return nil
 }
 
-func (x *XClient) Keeplive(ctx context.Context, ping proto.Message) error {
-	for {
-		if err := x.Go(ctx, ping); err != nil {
-			log.Error(err.Error())
-			return err
-		}
-	}
-}
-
-func (x *XClient) Go(ctx context.Context, request proto.Message) (err error) {
-	b, err := x.encode(request)
-	if err != nil {
-		return err
-	}
+func (x *XClient) Go(ctx context.Context, request []byte) (err error) {
 	if err := x.SetWriteDeadline(time.Now().Add(x.Timeout)); err != nil {
 		return err
 	}
-	if _, err := b.WriteTo(x.Conn); err != nil {
+	if _, err := x.Write(request); err != nil {
 		return err
 	}
 	return nil
@@ -89,16 +73,32 @@ func (x *XClient) serve(ctx context.Context) (err error) {
 		if err := x.Conn.SetReadDeadline(time.Now().Add(x.Timeout)); err != nil {
 			return err
 		}
-		iMessage, err := decode(buf)
+		iMessage, err := x.decode(buf)
 		if err != nil {
 			return err
 		}
-		req, err := x.decode(iMessage)
-		if err != nil {
-			return err
-		}
-		if err := x.Handler.ServeTCP(ctx, req); err != nil {
+		if err := x.Handler.ServeTCP(ctx, iMessage); err != nil {
 			return err
 		}
 	}
+}
+
+// 数据流解密
+func (x *XClient) decode(b *bufio.Reader) ([]byte, error) {
+	headerBytes, err := b.Peek(2)
+	if err != nil {
+		return nil, err
+	}
+	header := binary.BigEndian.Uint16(headerBytes)
+	if int(header) > b.Size() {
+		return nil, fmt.Errorf("header %v too long", header)
+	}
+	request, err := b.Peek(int(header))
+	if err != nil {
+		return nil, err
+	}
+	if _, err := b.Discard(len(request)); err != nil {
+		return nil, err
+	}
+	return request, nil
 }

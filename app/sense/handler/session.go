@@ -5,8 +5,6 @@ import (
 	"errors"
 	"go-driver/grpcx"
 	"go-driver/tcp"
-
-	"google.golang.org/protobuf/proto"
 )
 
 type Session struct {
@@ -19,7 +17,7 @@ type Session struct {
 	s       Scene
 }
 
-func (x *Session) ServeTCP(ctx context.Context, request proto.Message) error {
+func (x *Session) ServeTCP(ctx context.Context, request []byte) error {
 	return nil
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	"go-driver/app/sense/driver"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
@@ -39,7 +38,7 @@ func MakeHandler(ctx context.Context) *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	newSession := &Session{
-		Client:  tcp.NewClient(conn, tcp.Option{Messages: driver.Messages}),
+		Client:  tcp.NewClient(conn, tcp.Option{}),
 		iClient: x.iClient,
 	}
 	if err := newSession.Register(newSession); err != nil {

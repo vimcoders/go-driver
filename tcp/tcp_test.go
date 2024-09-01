@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"go-driver/driver"
-	"go-driver/pb"
 	"go-driver/tcp"
 
 	"go-driver/log"
@@ -40,11 +39,11 @@ func MakeHandler() *Handler {
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	cli := tcp.NewClient(conn, tcp.Option{Messages: x.messages})
+	cli := tcp.NewClient(conn, tcp.Option{})
 	cli.Register(x)
 }
 
-func (x *Handler) ServeTCP(ctx context.Context, req proto.Message) error {
+func (x *Handler) ServeTCP(ctx context.Context, req []byte) error {
 	log.Debug(req, "ServeTCP")
 	return nil
 }
@@ -77,10 +76,10 @@ func BenchmarkTCP(b *testing.B) {
 		fmt.Println(err)
 		return
 	}
-	cli := tcp.NewClient(conn, tcp.Option{Messages: driver.Messages})
+	cli := tcp.NewClient(conn, tcp.Option{})
 	cli.Register(MakeHandler())
 	for i := 0; i < b.N; i++ {
-		cli.Go(context.Background(), &pb.LoginRequest{Token: "token"})
+		//cli.Go(context.Background(), &pb.LoginRequest{Token: "token"})
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
