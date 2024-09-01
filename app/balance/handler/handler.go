@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"go-driver/driver"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
@@ -54,11 +55,12 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		Client: tcp.NewClient(c, tcp.Option{}),
-		rpc:    x.rpc,
+		Client:     tcp.NewClient(c, tcp.Option{}),
+		rpc:        x.rpc,
+		MethodDesc: driver.MethodDescs,
 		Pool: sync.Pool{
 			New: func() any {
-				return &Message{}
+				return &driver.Message{}
 			},
 		},
 	}

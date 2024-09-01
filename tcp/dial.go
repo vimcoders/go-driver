@@ -1,11 +1,8 @@
 package tcp
 
 import (
-	"go-driver/driver"
 	"net"
 )
-
-var Messages = driver.Messages
 
 func Dial(addr string) (Client, error) {
 	conn, err := net.Dial("tcp", addr)

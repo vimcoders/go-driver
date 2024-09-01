@@ -18,8 +18,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var Messages = driver.Messages
-
 type Buffer = driver.Buffer
 
 func NewBuffer(size int) Buffer {
@@ -32,9 +30,7 @@ type Handler struct {
 
 // MakeHandler creates a Handler instance
 func MakeHandler() *Handler {
-	return &Handler{
-		messages: Messages,
-	}
+	return &Handler{}
 }
 
 // Handle receives and executes redis commands
