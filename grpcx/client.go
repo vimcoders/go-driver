@@ -27,9 +27,9 @@ type Client interface {
 }
 
 type Option struct {
-	buffsize    uint16
-	timeout     time.Duration
-	ServiceDesc grpc.ServiceDesc
+	buffsize uint16
+	timeout  time.Duration
+	grpc.ServiceDesc
 }
 
 type XClient struct {
@@ -100,8 +100,8 @@ func (x *XClient) Register(a any) error {
 }
 
 func (x *XClient) Go(ctx context.Context, method string, req proto.Message) error {
-	for methodId := 0; methodId < len(x.ServiceDesc.Methods); methodId++ {
-		if filepath.Base(method) != x.ServiceDesc.Methods[methodId].MethodName {
+	for methodId := 0; methodId < len(x.Methods); methodId++ {
+		if filepath.Base(method) != x.Methods[methodId].MethodName {
 			continue
 		}
 		if err := x.push(0, uint16(methodId), req); err != nil {
@@ -113,8 +113,8 @@ func (x *XClient) Go(ctx context.Context, method string, req proto.Message) erro
 }
 
 func (x *XClient) Invoke(ctx context.Context, methodName string, req any, reply any, opts ...grpc.CallOption) (err error) {
-	for method := 0; method < len(x.ServiceDesc.Methods); method++ {
-		if x.ServiceDesc.Methods[method].MethodName != filepath.Base(methodName) {
+	for method := 0; method < len(x.Methods); method++ {
+		if x.Methods[method].MethodName != filepath.Base(methodName) {
 			continue
 		}
 		if err := x.invoke(ctx, uint16(method), req.(proto.Message), reply.(proto.Message)); err != nil {
@@ -127,16 +127,14 @@ func (x *XClient) Invoke(ctx context.Context, methodName string, req any, reply 
 
 func (x *XClient) invoke(ctx context.Context, method uint16, req, reply proto.Message) (err error) {
 	stream := x.streams.Get().(*stream)
-	x.addTask(stream)
+	x.addPending(stream)
 	response, err := stream.push(ctx, method, req)
 	if err != nil {
 		x.done(stream.seq)
 		return err
 	}
-	defer func() {
-		response.reset()
-		x.streams.Put(stream)
-	}()
+	response.reset()
+	x.streams.Put(stream)
 	if err := proto.Unmarshal(response.payload(), reply); err != nil {
 		return err
 	}
@@ -223,7 +221,7 @@ func (x *XClient) handle(ctx context.Context, iMessage Message) error {
 	return nil
 }
 
-func (x *XClient) addTask(s *stream) {
+func (x *XClient) addPending(s *stream) {
 	x.Lock()
 	defer x.Unlock()
 	x.pending[s.seq] = s
