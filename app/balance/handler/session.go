@@ -21,13 +21,13 @@ type Session struct {
 func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
 	var request driver.Message = stream
 	seq := request.Method()
-	req := x.MethodDesc[seq].Request
-	reply := x.MethodDesc[seq].Response
+	args := x.MethodDesc[seq].Args
+	reply := x.MethodDesc[seq].Replay
 	methodName := x.MethodDesc[seq].MethodName
-	if err := proto.Unmarshal(request.Payload(), req); err != nil {
+	if err := proto.Unmarshal(request.Payload(), args); err != nil {
 		return err
 	}
-	if err := x.rpc.Invoke(ctx, methodName, req, reply); err != nil {
+	if err := x.rpc.Invoke(ctx, methodName, args, reply); err != nil {
 		return err
 	}
 	response, err := x.encode(seq, reply)

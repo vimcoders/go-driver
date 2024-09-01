@@ -10,15 +10,15 @@ import (
 
 type MethodDesc struct {
 	MethodName string
-	Request    proto.Message
-	Response   proto.Message
+	Args       proto.Message
+	Replay     proto.Message
 }
 
 func (x MethodDesc) Clone() *MethodDesc {
 	return &MethodDesc{
 		MethodName: x.MethodName,
-		Request:    x.Request.ProtoReflect().New().Interface(),
-		Response:   x.Response.ProtoReflect().New().Interface(),
+		Args:       x.Args.ProtoReflect().New().Interface(),
+		Replay:     x.Replay.ProtoReflect().New().Interface(),
 	}
 }
 
@@ -32,9 +32,9 @@ func (x MethodDescList) Clone() (clone MethodDescList) {
 }
 
 var MethodDescs = MethodDescList{
-	{MethodName: "Ping", Request: &pb.PingRequest{}, Response: &pb.PingResponse{}},
-	{MethodName: "Login", Request: &pb.LoginRequest{}, Response: &pb.LoginResponse{}},
-	{MethodName: "Chat", Request: &pb.ChatRequest{}, Response: &pb.ChatResponse{}},
+	{MethodName: "Ping", Args: &pb.PingRequest{}, Replay: &pb.PingResponse{}},
+	{MethodName: "Login", Args: &pb.LoginRequest{}, Replay: &pb.LoginResponse{}},
+	{MethodName: "Chat", Args: &pb.ChatRequest{}, Replay: &pb.ChatResponse{}},
 }
 
 type Message []byte
