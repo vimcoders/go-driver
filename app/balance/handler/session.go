@@ -4,7 +4,6 @@ import (
 	"context"
 	"go-driver/driver"
 	"go-driver/tcp"
-	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -13,7 +12,6 @@ import (
 type Session struct {
 	c tcp.Client
 	grpc.ServiceDesc
-	sync.Pool
 }
 
 func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {

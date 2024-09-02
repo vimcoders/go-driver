@@ -4,10 +4,8 @@ import (
 	"context"
 	"net"
 	"runtime"
-	"sync"
 	"time"
 
-	"go-driver/driver"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
@@ -56,11 +54,6 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
 		c: tcp.NewClient(c, tcp.Option{}),
-		Pool: sync.Pool{
-			New: func() any {
-				return &driver.Message{}
-			},
-		},
 	}
 	newSession.c.Register(newSession)
 }
