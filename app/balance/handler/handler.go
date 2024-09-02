@@ -55,16 +55,14 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		Client:     tcp.NewClient(c, tcp.Option{}),
-		rpc:        x.rpc,
-		MethodDesc: driver.MethodDescs.Clone(),
+		c: tcp.NewClient(c, tcp.Option{}),
 		Pool: sync.Pool{
 			New: func() any {
 				return &driver.Message{}
 			},
 		},
 	}
-	newSession.Client.Register(newSession)
+	newSession.c.Register(newSession)
 }
 
 // Close stops handler
