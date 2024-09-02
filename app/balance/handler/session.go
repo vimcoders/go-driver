@@ -47,6 +47,14 @@ func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
 	return nil
 }
 
+func (x *Session) ServeKCP(ctx context.Context, stream []byte) error {
+	return x.ServeTCP(ctx, stream)
+}
+
+func (x *Session) ServeQUIC(ctx context.Context, stream []byte) error {
+	return x.ServeTCP(ctx, stream)
+}
+
 func (x *Session) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	unix := time.Now().Unix()
 	x.total++
