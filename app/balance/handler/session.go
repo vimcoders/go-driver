@@ -3,7 +3,11 @@ package handler
 import (
 	"context"
 	"go-driver/driver"
+	"go-driver/log"
+	"go-driver/pb"
 	"go-driver/tcp"
+	"runtime"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -12,6 +16,8 @@ import (
 type Session struct {
 	c tcp.Client
 	grpc.ServiceDesc
+	total uint64
+	unix  int64
 }
 
 func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
@@ -39,6 +45,17 @@ func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (x *Session) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+	unix := time.Now().Unix()
+	x.total++
+	if unix != x.unix {
+		log.Debug(x.total, " request/s", " NumGoroutine ", runtime.NumGoroutine())
+		x.total = 0
+		x.unix = unix
+	}
+	return &pb.PingResponse{Message: req.Message}, nil
 }
 
 func (x *Session) Close() error {
