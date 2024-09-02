@@ -21,6 +21,18 @@ type Session struct {
 }
 
 func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
+	return x.Handle(ctx, stream)
+}
+
+func (x *Session) ServeKCP(ctx context.Context, stream []byte) error {
+	return x.Handle(ctx, stream)
+}
+
+func (x *Session) ServeQUIC(ctx context.Context, stream []byte) error {
+	return x.Handle(ctx, stream)
+}
+
+func (x *Session) Handle(ctx context.Context, stream []byte) error {
 	var request driver.Message = stream
 	method, payload := request.Method(), request.Payload()
 	dec := func(in any) error {
@@ -45,14 +57,6 @@ func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (x *Session) ServeKCP(ctx context.Context, stream []byte) error {
-	return x.ServeTCP(ctx, stream)
-}
-
-func (x *Session) ServeQUIC(ctx context.Context, stream []byte) error {
-	return x.ServeTCP(ctx, stream)
 }
 
 func (x *Session) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
