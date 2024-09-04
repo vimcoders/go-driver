@@ -20,20 +20,20 @@ type Session struct {
 	unix  int64
 }
 
-func (x *Session) ServeTCP(ctx context.Context, stream []byte) error {
-	return x.Handle(ctx, stream)
+func (x *Session) ServeTCP(ctx context.Context, buf []byte) error {
+	return x.Handle(ctx, buf)
 }
 
-func (x *Session) ServeKCP(ctx context.Context, stream []byte) error {
-	return x.Handle(ctx, stream)
+func (x *Session) ServeKCP(ctx context.Context, buf []byte) error {
+	return x.Handle(ctx, buf)
 }
 
-func (x *Session) ServeQUIC(ctx context.Context, stream []byte) error {
-	return x.Handle(ctx, stream)
+func (x *Session) ServeQUIC(ctx context.Context, buf []byte) error {
+	return x.Handle(ctx, buf)
 }
 
-func (x *Session) Handle(ctx context.Context, stream []byte) error {
-	var request driver.Message = stream
+func (x *Session) Handle(ctx context.Context, buf []byte) error {
+	var request driver.Message = buf
 	method, payload := request.Method(), request.Payload()
 	dec := func(in any) error {
 		if err := proto.Unmarshal(payload, in.(proto.Message)); err != nil {
@@ -49,11 +49,10 @@ func (x *Session) Handle(ctx context.Context, stream []byte) error {
 	if err != nil {
 		return err
 	}
-	request.Reset()
-	request.WriteUint16(uint16(4 + len(b)))
-	request.WriteUint16(method)
-	request.Write(b)
-	if _, err := x.c.Write(request); err != nil {
+	var response driver.Message
+	response.WriteUint16(uint16(4+len(b)), method)
+	response.Write(b)
+	if _, err := response.WriteTo(x.c); err != nil {
 		return err
 	}
 	return nil
