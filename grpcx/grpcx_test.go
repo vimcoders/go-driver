@@ -39,7 +39,7 @@ import (
 type Handle struct {
 	total uint64
 	unix  int64
-	pb.HandlerServer
+	pb.ParkourServer
 }
 
 // MakeHandler creates a Handler instance
@@ -49,7 +49,7 @@ func MakeHandler() *Handle {
 
 // Handle receives and executes redis commands
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
-	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	//go cli.Keeplive(ctx, &pb.PingRequest{})
 	cli.Register(x)
 }
@@ -97,7 +97,7 @@ func TestMain(m *testing.M) {
 
 func BenchmarkTCP(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("tcp", "127.0.0.1:28888", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli, err := grpcx.Dial("tcp", "127.0.0.1:28888", grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -113,7 +113,7 @@ func BenchmarkTCP(b *testing.B) {
 
 func BenchmarkQUIC(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -139,13 +139,13 @@ func BenchmarkMessage(b *testing.B) {
 
 func BenchmarkPing(b *testing.B) {
 	fmt.Println(runtime.NumCPU())
-	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli, err := grpcx.Dial("udp", "127.0.0.1:28889", grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	cli.Register(MakeHandler())
-	client := pb.NewHandlerClient(cli)
+	client := pb.NewParkourClient(cli)
 	for i := 0; i < b.N; i++ {
 		if _, err := client.Ping(context.Background(), &pb.PingRequest{}); err != nil {
 			fmt.Println(err.Error())

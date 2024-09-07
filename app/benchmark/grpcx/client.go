@@ -12,7 +12,7 @@ import (
 type Handle struct {
 	total uint64
 	unix  int64
-	pb.HandlerServer
+	pb.ParkourClient
 }
 
 // MakeHandler creates a Handler instance
@@ -33,16 +33,16 @@ func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 
 type Client struct {
 	grpcx.Client
-	pb.HandlerClient
+	pb.ParkourServer
 }
 
 func Dial(network string, addr string) (*Client, error) {
-	cli, err := grpcx.Dial(network, addr, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli, err := grpcx.Dial(network, addr, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err != nil {
 		return nil, err
 	}
 	cli.Register(MakeHandler())
-	return &Client{Client: cli, HandlerClient: pb.NewHandlerClient(cli)}, nil
+	return &Client{Client: cli}, nil
 }
 
 func (x *Client) BenchmarkQUIC() {

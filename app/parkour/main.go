@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/logic/handler"
+	"go-driver/app/parkour/handler"
 	"go-driver/log"
 )
 

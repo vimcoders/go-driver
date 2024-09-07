@@ -2,7 +2,7 @@ package handler
 
 import (
 	"flag"
-	"go-driver/app/logic/driver"
+	"go-driver/app/parkour/driver"
 	"os"
 
 	"gopkg.in/yaml.v3"

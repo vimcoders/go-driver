@@ -60,10 +60,8 @@ func (x *Message) WriteUint32(values ...uint32) {
 	}
 }
 
-func (x *Message) WriteUint16(values ...uint16) {
-	for i := 0; i < len(values); i++ {
-		*x = binary.BigEndian.AppendUint16(*x, values[i])
-	}
+func (x *Message) WriteUint16(v uint16) {
+	*x = binary.BigEndian.AppendUint16(*x, v)
 }
 
 func (x *Message) Reset() {

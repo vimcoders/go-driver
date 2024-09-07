@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"net"
+	"time"
 )
 
 func Dial(addr string) (Client, error) {
@@ -9,5 +10,5 @@ func Dial(addr string) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewClient(conn, Option{}), nil
+	return NewClient(conn, Option{Timeout: time.Minute, Buffsize: 1024}), nil
 }

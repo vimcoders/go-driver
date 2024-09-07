@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"go-driver/app/logic/driver"
+	"go-driver/app/parkour/driver"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/mongox"
@@ -33,7 +33,7 @@ type Handler struct {
 	unix  int64
 	c     grpcx.Client
 	sync.RWMutex
-	pb.HandlerServer
+	pb.ParkourServer
 }
 
 // MakeHandler creates a Handler instance
@@ -52,7 +52,7 @@ func MakeHandler(ctx context.Context) *Handler {
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
-	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Handler_ServiceDesc})
+	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err := cli.Register(x); err != nil {
 		log.Error(err.Error())
 	}

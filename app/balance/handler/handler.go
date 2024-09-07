@@ -4,23 +4,23 @@ import (
 	"context"
 	"net"
 	"runtime"
+	"sync"
 	"time"
 
-	"go-driver/grpcx"
+	"go-driver/driver"
 	"go-driver/log"
 	"go-driver/pb"
 	"go-driver/tcp"
-
-	etcd "go.etcd.io/etcd/client/v3"
+	//etcd "go.etcd.io/etcd/client/v3"
 )
 
 var handler *Handler
-var _ pb.HandlerServer = handler
+var _ pb.ParkourServer = handler
 
 type Handler struct {
-	rpc grpcx.Client
-	pb.UnimplementedHandlerServer
-	*etcd.Client
+	//rpc grpcx.Client
+	pb.UnimplementedParkourServer
+	//*etcd.Client
 	Option
 	total uint64
 	unix  int64
@@ -53,7 +53,13 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{
-		c: tcp.NewClient(c, tcp.Option{}),
+		c:           tcp.NewClient(c, tcp.Option{Timeout: time.Hour, Buffsize: 1024}),
+		ServiceDesc: pb.Parkour_ServiceDesc,
+		Pool: sync.Pool{
+			New: func() any {
+				return &driver.Message{}
+			},
+		},
 	}
 	newSession.c.Register(newSession)
 }

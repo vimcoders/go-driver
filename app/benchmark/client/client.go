@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"go-driver/driver"
 	"go-driver/log"
+	"go-driver/pb"
 	"go-driver/tcp"
 	"io"
 	"math/rand"
 	"net"
 	"net/http"
+	"sync"
+
+	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type ResponseWriter[T any] struct {
@@ -26,7 +31,8 @@ type Client struct {
 	CometUrl string
 	Token    string
 	tcp.Client
-	//messages []proto.Message
+	grpc.ServiceDesc
+	sync.Pool
 }
 
 func (x *Client) Register() error {
@@ -60,10 +66,6 @@ func (x *Client) Register() error {
 	return nil
 }
 
-func (x *Client) ServeTCP(ctx context.Context, reply []byte) error {
-	return nil
-}
-
 func (x *Client) Login() error {
 	// conn, err := quicx.Dial(x.CometUrl, &tls.Config{
 	// 	InsecureSkipVerify: true,
@@ -88,5 +90,55 @@ func (x *Client) Login() error {
 	// 	return err
 	// }
 	//go x.Keeplive(context.Background(), &pb.PingRequest{})
+	return nil
+}
+
+func (x *Client) Ping(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			b, err := proto.Marshal(&pb.PingRequest{})
+			if err != nil {
+				panic(err)
+			}
+			response := x.Pool.Get().(*driver.Message)
+			response.WriteUint16(uint16(4 + len(b)))
+			response.WriteUint16(0)
+			response.Write(b)
+			if _, err := response.WriteTo(x.Client); err != nil {
+				panic(err)
+			}
+			response.Reset()
+			x.Pool.Put(response)
+		}
+	}
+}
+
+func (x *Client) ServeTCP(ctx context.Context, buf []byte) error {
+	return nil
+}
+
+func (x *Client) ServeKCP(ctx context.Context, buf []byte) error {
+	return x.Handle(ctx, buf)
+}
+
+func (x *Client) ServeQUIC(ctx context.Context, buf []byte) error {
+	return x.Handle(ctx, buf)
+}
+
+func (x *Client) Handle(ctx context.Context, buf []byte) error {
+	// var request driver.Message = buf
+	// method, payload := request.Method(), request.Payload()
+	// dec := func(in any) error {
+	// 	if err := proto.Unmarshal(payload, in.(proto.Message)); err != nil {
+	// 		return err
+	// 	}
+	// 	return nil
+	// }
+	// _, err := x.Methods[method].Handler(x, ctx, dec, nil)
+	// if err != nil {
+	// 	log.Error(err.Error())
+	// }
 	return nil
 }

@@ -11,7 +11,7 @@ message PingResponse {
 	bytes Message = 1;
 }
 
-service Handler {
+service Parkour {
 	rpc Ping(PingRequest) returns (PingResponse) {}
 	rpc Login(LoginRequest) returns (LoginResponse) {}
 }

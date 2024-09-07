@@ -2,13 +2,21 @@
 package main
 
 import (
-	"go-driver/app/benchmark/grpcx"
+	"context"
+	benchmark "go-driver/app/benchmark/client"
+	"go-driver/driver"
 	"go-driver/log"
+	"go-driver/pb"
+	"go-driver/tcp"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
+
+	_ "net/http/pprof"
 )
 
 // func main() {
@@ -39,14 +47,26 @@ import (
 // }
 
 func main() {
-	runtime.GOMAXPROCS(2)
+	go func() {
+		http.ListenAndServe(":6060", nil)
+	}()
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
-	client, err := grpcx.Dial("udp", "127.0.0.1:8972")
+	client, err := tcp.Dial("127.0.0.1:9600")
 	if err != nil {
 		panic(err)
 	}
-	for i := 0; i < 4000; i++ {
-		go client.BenchmarkQUIC()
+	bot := benchmark.Client{
+		ServiceDesc: pb.Parkour_ServiceDesc,
+		Client:      client,
+		Pool: sync.Pool{
+			New: func() any {
+				return &driver.Message{}
+			},
+		},
+	}
+	bot.Client.Register(&bot)
+	for i := 0; i < 20000; i++ {
+		go bot.Ping(context.Background())
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -56,7 +76,7 @@ func main() {
 		case <-quit:
 			return
 		case <-ticker.C:
-			log.Debug("NumGoroutine", runtime.NumGoroutine())
+			log.Debug(" NumGoroutine ", runtime.NumGoroutine())
 		}
 	}
 }

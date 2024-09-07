@@ -80,6 +80,9 @@ func (x *XClient) serve(ctx context.Context) (err error) {
 		if err := x.Handler.ServeTCP(ctx, iMessage); err != nil {
 			return err
 		}
+		if _, err := buf.Discard(len(iMessage)); err != nil {
+			return err
+		}
 	}
 }
 
@@ -95,9 +98,6 @@ func (x *XClient) decode(b *bufio.Reader) ([]byte, error) {
 	}
 	request, err := b.Peek(int(header))
 	if err != nil {
-		return nil, err
-	}
-	if _, err := b.Discard(len(request)); err != nil {
 		return nil, err
 	}
 	return request, nil

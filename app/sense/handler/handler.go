@@ -18,7 +18,7 @@ type Handler struct {
 	Option
 	iClient grpcx.Client
 	rpc     grpcx.Client
-	pb.UnimplementedHandlerServer
+	pb.UnimplementedParkourServer
 	*etcd.Client
 }
 
