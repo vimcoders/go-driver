@@ -4,16 +4,15 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	benchmark "go-driver/app/benchmark/client"
-	"go-driver/driver"
+	"fmt"
+	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/tcp"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
@@ -47,6 +46,44 @@ import (
 // 	}
 // }
 
+type Handle struct {
+	total uint64
+	unix  int64
+	pb.ParkourServer
+}
+
+// MakeHandler creates a Handler instance
+func MakeHandler() *Handle {
+	return &Handle{}
+}
+
+// Handle receives and executes redis commands
+func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
+	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
+	//go cli.Keeplive(ctx, &pb.PingRequest{})
+	cli.Register(x)
+}
+
+func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
+	unix := time.Now().Unix()
+	x.total++
+	if unix != x.unix {
+		fmt.Println(x.total, " request/s", " NumGoroutine ", runtime.NumGoroutine())
+		x.total = 0
+		x.unix = unix
+	}
+	return &pb.PingResponse{Message: req.Message}, nil
+}
+
+func (x *Handle) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	return &pb.LoginResponse{Code: http.StatusOK}, nil
+}
+
+// Close stops handler
+func (x *Handle) Close() error {
+	return nil
+}
+
 func main() {
 	go func() {
 		http.ListenAndServe(":6060", nil)
@@ -57,28 +94,18 @@ func main() {
 		NextProtos:         []string{"quic-echo-example"},
 		MaxVersion:         tls.VersionTLS13,
 	})
-	// conn, err := quicx.Dial("127.0.0.1:9700", &tls.Config{
-	// 	InsecureSkipVerify: true,
-	// 	NextProtos:         []string{"quic-echo-example"},
-	// 	MaxVersion:         tls.VersionTLS13,
-	// }, &quicx.Config{
-	// 	MaxIdleTimeout: time.Minute,
-	// })
 	if err != nil {
 		panic(err)
 	}
-	bot := benchmark.Client{
-		ServiceDesc: pb.Parkour_ServiceDesc,
-		Client:      tcp.NewClient(conn, tcp.Option{}),
-		Pool: sync.Pool{
-			New: func() any {
-				return &driver.Message{}
-			},
-		},
-	}
-	bot.Client.Register(&bot)
-	for i := 0; i < 20000; i++ {
-		go bot.Ping(context.Background())
+	clientInterface := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
+	clientInterface.Register(MakeHandler())
+	client := pb.NewParkourClient(clientInterface)
+	for i := 0; i < 100; i++ {
+		go func() {
+			for {
+				client.Ping(context.Background(), &pb.PingRequest{})
+			}
+		}()
 	}
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

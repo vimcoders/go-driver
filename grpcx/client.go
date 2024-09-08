@@ -133,11 +133,11 @@ func (x *XClient) invoke(ctx context.Context, method uint16, req, reply proto.Me
 		x.done(stream.seq)
 		return err
 	}
-	response.reset()
-	x.streams.Put(stream)
 	if err := proto.Unmarshal(response.payload(), reply); err != nil {
 		return err
 	}
+	response.reset()
+	x.streams.Put(stream)
 	return nil
 }
 

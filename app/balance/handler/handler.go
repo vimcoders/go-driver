@@ -4,13 +4,11 @@ import (
 	"context"
 	"net"
 	"runtime"
-	"sync"
 	"time"
 
-	"go-driver/driver"
+	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/tcp"
 	//etcd "go.etcd.io/etcd/client/v3"
 )
 
@@ -52,16 +50,11 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
-	newSession := &Session{
-		c:           tcp.NewClient(c, tcp.Option{Timeout: time.Hour, Buffsize: 1024}),
-		ServiceDesc: pb.Parkour_ServiceDesc,
-		Pool: sync.Pool{
-			New: func() any {
-				return &driver.Message{}
-			},
-		},
+	newSession := &Session{}
+	cli := grpcx.NewClient(c, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
+	if err := cli.Register(newSession); err != nil {
+		log.Error(err.Error())
 	}
-	newSession.c.Register(newSession)
 }
 
 // Close stops handler
