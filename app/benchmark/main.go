@@ -8,6 +8,7 @@ import (
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/pb"
+	"go-driver/quicx"
 	"net"
 	"net/http"
 	"os"
@@ -89,10 +90,17 @@ func main() {
 		http.ListenAndServe(":6060", nil)
 	}()
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
-	conn, err := tls.Dial("tcp", "127.0.0.1:9600", &tls.Config{
+	// conn, err := tls.Dial("tcp", "127.0.0.1:9600", &tls.Config{
+	// 	InsecureSkipVerify: true,
+	// 	NextProtos:         []string{"quic-echo-example"},
+	// 	MaxVersion:         tls.VersionTLS13,
+	// })
+	conn, err := quicx.Dial("127.0.0.1:9700", &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"quic-echo-example"},
 		MaxVersion:         tls.VersionTLS13,
+	}, &quicx.Config{
+		MaxIdleTimeout: time.Minute,
 	})
 	if err != nil {
 		panic(err)
@@ -100,7 +108,7 @@ func main() {
 	clientInterface := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	clientInterface.Register(MakeHandler())
 	client := pb.NewParkourClient(clientInterface)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		go func() {
 			for {
 				client.Ping(context.Background(), &pb.PingRequest{})
