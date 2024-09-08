@@ -5,9 +5,7 @@ import (
 	"net"
 
 	"go-driver/grpcx"
-	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/tcp"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )
@@ -16,8 +14,7 @@ var handler *Handler
 
 type Handler struct {
 	Option
-	iClient grpcx.Client
-	rpc     grpcx.Client
+	rpc grpcx.Client
 	pb.UnimplementedParkourServer
 	*etcd.Client
 }
@@ -37,13 +34,6 @@ func MakeHandler(ctx context.Context) *Handler {
 
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
-	newSession := &Session{
-		Client:  tcp.NewClient(conn, tcp.Option{}),
-		iClient: x.iClient,
-	}
-	if err := newSession.Register(newSession); err != nil {
-		log.Error(err.Error())
-	}
 }
 
 func (x *Handler) LoginRequest() {

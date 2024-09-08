@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"go-driver/grpcx"
-	"go-driver/tcp"
 )
 
 type Session struct {
-	UserId int64
-	Level  int16
-	Name   string
-	Icon   string
-	tcp.Client
+	UserId  int64
+	Level   int16
+	Name    string
+	Icon    string
 	iClient grpcx.Client
 	s       Scene
 }
