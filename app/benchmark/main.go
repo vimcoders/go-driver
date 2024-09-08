@@ -8,7 +8,6 @@ import (
 	"go-driver/driver"
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/quicx"
 	"go-driver/tcp"
 	"net/http"
 	"os"
@@ -53,13 +52,18 @@ func main() {
 		http.ListenAndServe(":6060", nil)
 	}()
 	log.Info("runtime.NumCPU: ", runtime.NumCPU())
-	conn, err := quicx.Dial("127.0.0.1:9700", &tls.Config{
+	conn, err := tls.Dial("tcp", "127.0.0.1:9600", &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"quic-echo-example"},
 		MaxVersion:         tls.VersionTLS13,
-	}, &quicx.Config{
-		MaxIdleTimeout: time.Minute,
 	})
+	// conn, err := quicx.Dial("127.0.0.1:9700", &tls.Config{
+	// 	InsecureSkipVerify: true,
+	// 	NextProtos:         []string{"quic-echo-example"},
+	// 	MaxVersion:         tls.VersionTLS13,
+	// }, &quicx.Config{
+	// 	MaxIdleTimeout: time.Minute,
+	// })
 	if err != nil {
 		panic(err)
 	}

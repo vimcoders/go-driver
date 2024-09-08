@@ -11,19 +11,19 @@ import (
 	"go-driver/quicx"
 	"math/big"
 	"runtime"
-	"time"
 )
 
 func (x *Handler) ListenAndServe(ctx context.Context) {
+	listener, err := tls.Listen("tcp", x.TCP.LocalAddr, generateTLSConfig())
 	// addr, err := net.ResolveTCPAddr("tcp4", x.TCP.LocalAddr)
 	// if err != nil {
 	// 	panic(err)
 	// }
 	// listener, err := net.ListenTCP("tcp", addr)
 	// tcpAddr := listener.Addr().(*net.TCPAddr)
-	listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
-		MaxIdleTimeout: time.Minute,
-	})
+	// listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
+	// 	MaxIdleTimeout: time.Minute,
+	// })
 	if err != nil {
 		panic(err)
 	}
