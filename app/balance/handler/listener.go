@@ -10,8 +10,8 @@ import (
 	"go-driver/log"
 	"go-driver/quicx"
 	"math/big"
+	"net"
 	"runtime"
-	"time"
 )
 
 func (x *Handler) ListenAndServe(ctx context.Context) {
@@ -20,11 +20,11 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	// listener, err := net.ListenTCP("tcp", addr)
+	listener, err := net.Listen("tcp", x.TCP.LocalAddr)
 	// tcpAddr := listener.Addr().(*net.TCPAddr)
-	listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
-		MaxIdleTimeout: time.Minute,
-	})
+	// listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
+	// 	MaxIdleTimeout: time.Minute,
+	// })
 	if err != nil {
 		panic(err)
 	}

@@ -2,40 +2,8 @@ package driver
 
 import (
 	"encoding/binary"
-	"go-driver/pb"
 	"io"
-
-	"google.golang.org/protobuf/proto"
 )
-
-type MethodDesc struct {
-	MethodName string
-	Args       proto.Message
-	Replay     proto.Message
-}
-
-func (x MethodDesc) Clone() *MethodDesc {
-	return &MethodDesc{
-		MethodName: x.MethodName,
-		Args:       x.Args.ProtoReflect().New().Interface(),
-		Replay:     x.Replay.ProtoReflect().New().Interface(),
-	}
-}
-
-type MethodDescList []*MethodDesc
-
-func (x MethodDescList) Clone() (clone MethodDescList) {
-	for i := 0; i < len(x); i++ {
-		clone = append(clone, x[i].Clone())
-	}
-	return clone
-}
-
-var MethodDescs = MethodDescList{
-	{MethodName: "Ping", Args: &pb.PingRequest{}, Replay: &pb.PingResponse{}},
-	{MethodName: "Login", Args: &pb.LoginRequest{}, Replay: &pb.LoginResponse{}},
-	{MethodName: "Chat", Args: &pb.ChatRequest{}, Replay: &pb.ChatResponse{}},
-}
 
 type Message []byte
 
