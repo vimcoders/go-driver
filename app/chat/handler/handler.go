@@ -80,10 +80,7 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
 	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Chat_ServiceDesc})
-	if err := cli.Register(x); err != nil {
+	if err := cli.Register(ctx, x); err != nil {
 		log.Error(err.Error())
-	}
-	for i := 0; i < 1; i++ {
-		go cli.Keeplive(context.Background(), &pb.PingRequest{})
 	}
 }

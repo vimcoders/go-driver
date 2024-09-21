@@ -62,7 +62,7 @@ func MakeHandler() *Handle {
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	//go cli.Keeplive(ctx, &pb.PingRequest{})
-	cli.Register(x)
+	cli.Register(ctx, x)
 }
 
 func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
@@ -106,7 +106,7 @@ func main() {
 		panic(err)
 	}
 	clientInterface := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
-	clientInterface.Register(MakeHandler())
+	clientInterface.Register(context.Background(), MakeHandler())
 	client := pb.NewParkourClient(clientInterface)
 	for i := 0; i < 1000; i++ {
 		go func() {

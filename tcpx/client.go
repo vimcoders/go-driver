@@ -13,7 +13,7 @@ import (
 )
 
 type Client interface {
-	Register(any) error
+	Register(context.Context, any) error
 	Go(context.Context, proto.Message) error
 	net.Conn
 	Close() error
@@ -49,12 +49,12 @@ func (x *ClientX) Go(ctx context.Context, req proto.Message) error {
 	return nil
 }
 
-func (x *ClientX) Register(a any) error {
+func (x *ClientX) Register(ctx context.Context, a any) error {
 	if x.handler != nil {
 		return errors.New("x.svr  != nil")
 	}
 	x.handler = a
-	go x.serve(context.Background())
+	go x.serve(ctx)
 	return nil
 }
 

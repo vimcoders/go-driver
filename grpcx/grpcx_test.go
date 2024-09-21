@@ -51,7 +51,7 @@ func MakeHandler() *Handle {
 func (x *Handle) Handle(ctx context.Context, conn net.Conn) {
 	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	//go cli.Keeplive(ctx, &pb.PingRequest{})
-	cli.Register(x)
+	cli.Register(context.Background(), x)
 }
 
 func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
@@ -102,7 +102,7 @@ func BenchmarkTCP(b *testing.B) {
 		fmt.Println(err.Error())
 		return
 	}
-	cli.Register(MakeHandler())
+	cli.Register(context.Background(), MakeHandler())
 	for i := 0; i < b.N; i++ {
 		if err := cli.Go(context.Background(), "Ping", &pb.PingRequest{}); err != nil {
 			fmt.Println(err.Error())
@@ -118,7 +118,7 @@ func BenchmarkQUIC(b *testing.B) {
 		fmt.Println(err.Error())
 		return
 	}
-	cli.Register(MakeHandler())
+	cli.Register(context.Background(), MakeHandler())
 	for i := 0; i < b.N; i++ {
 		if err := cli.Go(context.Background(), "Ping", &pb.PingRequest{}); err != nil {
 			fmt.Println(err.Error())
@@ -144,7 +144,7 @@ func BenchmarkPing(b *testing.B) {
 		fmt.Println(err.Error())
 		return
 	}
-	cli.Register(MakeHandler())
+	cli.Register(context.Background(), MakeHandler())
 	client := pb.NewParkourClient(cli)
 	for i := 0; i < b.N; i++ {
 		if _, err := client.Ping(context.Background(), &pb.PingRequest{}); err != nil {

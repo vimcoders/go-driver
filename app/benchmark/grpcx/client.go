@@ -41,7 +41,7 @@ func Dial(network string, addr string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	cli.Register(MakeHandler())
+	cli.Register(context.Background(), MakeHandler())
 	return &Client{Client: cli}, nil
 }
 

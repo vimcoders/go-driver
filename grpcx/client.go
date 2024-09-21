@@ -19,8 +19,7 @@ import (
 
 type Client interface {
 	grpc.ClientConnInterface
-	Register(any) error
-	Keeplive(context.Context, proto.Message) error
+	Register(context.Context, any) error
 	Go(context.Context, string, proto.Message) error
 	RemoteAddr() net.Addr
 	Close() error
@@ -90,12 +89,12 @@ func (x *XClient) Close() error {
 	return x.Conn.Close()
 }
 
-func (x *XClient) Register(a any) error {
+func (x *XClient) Register(ctx context.Context, a any) error {
 	if x.handler != nil {
 		return errors.New("x.svr  != nil")
 	}
 	x.handler = a
-	go x.serve(context.Background())
+	go x.serve(ctx)
 	return nil
 }
 

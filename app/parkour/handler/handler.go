@@ -53,11 +53,8 @@ func MakeHandler(ctx context.Context) *Handler {
 func (x *Handler) Handle(ctx context.Context, conn net.Conn) {
 	log.Infof("new conn %s", conn.RemoteAddr().String())
 	cli := grpcx.NewClient(conn, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
-	if err := cli.Register(x); err != nil {
+	if err := cli.Register(ctx, x); err != nil {
 		log.Error(err.Error())
-	}
-	for i := 0; i < 1; i++ {
-		go cli.Keeplive(context.Background(), &pb.PingRequest{})
 	}
 	x.unix = time.Now().Unix()
 	x.c = cli

@@ -52,7 +52,7 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{}
 	cli := grpcx.NewClient(c, grpcx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
-	if err := cli.Register(newSession); err != nil {
+	if err := cli.Register(ctx, newSession); err != nil {
 		log.Error(err.Error())
 	}
 }
