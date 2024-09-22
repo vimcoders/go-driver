@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"go-driver/log"
-	"go-driver/quicx"
+	"go-driver/tcpx"
 	"math/big"
 	"net"
 	"runtime"
@@ -16,12 +16,7 @@ import (
 
 func (x *Handler) ListenAndServe(ctx context.Context) {
 	//listener, err := tls.Listen("tcp", x.TCP.LocalAddr, generateTLSConfig())
-	// addr, err := net.ResolveTCPAddr("tcp4", x.TCP.LocalAddr)
-	// if err != nil {
-	// 	panic(err)
-	// }
 	listener, err := net.Listen("tcp", x.TCP.LocalAddr)
-	// tcpAddr := listener.Addr().(*net.TCPAddr)
 	// listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
 	// 	MaxIdleTimeout: time.Minute,
 	// })
@@ -29,7 +24,8 @@ func (x *Handler) ListenAndServe(ctx context.Context) {
 		panic(err)
 	}
 	for i := 0; i < runtime.NumCPU(); i++ {
-		go quicx.ListenAndServe(ctx, listener, x)
+		//go quicx.ListenAndServe(ctx, listener, x)
+		go tcpx.ListenAndServe(ctx, listener, x)
 	}
 	log.Infof("running %s", listener.Addr().String())
 }

@@ -14,18 +14,6 @@ type Session struct {
 	pb.UnimplementedParkourServer
 }
 
-func (x *Session) ServeTCP(ctx context.Context, buf []byte) error {
-	return nil
-}
-
-func (x *Session) ServeKCP(ctx context.Context, buf []byte) error {
-	return nil
-}
-
-func (x *Session) ServeQUIC(ctx context.Context, buf []byte) error {
-	return nil
-}
-
 func (x *Session) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
 	unix := time.Now().Unix()
 	x.total++

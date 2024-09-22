@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"go-driver/log"
 	"net"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -17,6 +19,10 @@ type Client interface {
 	Go(context.Context, proto.Message) error
 	net.Conn
 	Close() error
+}
+
+type Handler interface {
+	Handle(context.Context, Message) error
 }
 
 type Option struct {
@@ -46,7 +52,17 @@ func newClient(c net.Conn, opt Option) Client {
 }
 
 func (x *ClientX) Go(ctx context.Context, req proto.Message) error {
-	return nil
+	metodName := proto.MessageName(req)
+	for methodId := 0; methodId < len(x.Methods); methodId++ {
+		if ok := strings.Contains(string(metodName), x.Methods[methodId].MethodName); !ok {
+			continue
+		}
+		if err := x.push(uint16(methodId), req); err != nil {
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("%s not registed", metodName)
 }
 
 func (x *ClientX) Register(ctx context.Context, a any) error {
@@ -84,6 +100,9 @@ func (x *ClientX) serve(ctx context.Context) (err error) {
 		if err != nil {
 			return err
 		}
+		if x.handler == nil {
+			continue
+		}
 		method, payload := iMessage.method(), iMessage.payload()
 		dec := func(in any) error {
 			if err := proto.Unmarshal(payload, in.(proto.Message)); err != nil {
@@ -103,4 +122,18 @@ func (x *ClientX) serve(ctx context.Context) (err error) {
 			return err
 		}
 	}
+}
+
+func (x *ClientX) push(method uint16, req proto.Message) (err error) {
+	buf, err := encode(method, req)
+	if err != nil {
+		return err
+	}
+	if err := x.SetWriteDeadline(time.Now().Add(x.timeout)); err != nil {
+		return err
+	}
+	if _, err := buf.WriteTo(x.Conn); err != nil {
+		return err
+	}
+	return nil
 }

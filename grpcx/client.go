@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -151,6 +152,7 @@ func (x *XClient) push(seq uint32, method uint16, req proto.Message) (err error)
 	if _, err := buf.WriteTo(x.Conn); err != nil {
 		return err
 	}
+	buf.reset()
 	return nil
 }
 
@@ -165,6 +167,7 @@ func (x *XClient) serve(ctx context.Context) (err error) {
 		if err := x.Close(); err != nil {
 			log.Error(err.Error())
 		}
+		debug.PrintStack()
 	}()
 	buf := bufio.NewReaderSize(x.Conn, int(x.buffsize))
 	for {

@@ -43,7 +43,7 @@ func encode(method uint16, iMessage proto.Message) (Message, error) {
 		return nil, err
 	}
 	buf := pool.Get().(*Message)
-	buf.WriteUint16(uint16(8 + len(b)))
+	buf.WriteUint16(uint16(4 + len(b)))
 	buf.WriteUint16(method)
 	if _, err := buf.Write(b); err != nil {
 		return nil, err
@@ -56,11 +56,11 @@ func (x Message) length() uint16 {
 }
 
 func (x Message) method() uint16 {
-	return binary.BigEndian.Uint16(x[4:])
+	return binary.BigEndian.Uint16(x[2:])
 }
 
 func (x Message) payload() []byte {
-	return x[6:x.length()]
+	return x[4:x.length()]
 }
 
 // func (x Message) clone() (Message, error) {
