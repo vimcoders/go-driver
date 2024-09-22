@@ -3,16 +3,15 @@ package handler
 import (
 	"context"
 	"errors"
-	"go-driver/grpcx"
 )
 
 type Session struct {
-	UserId  int64
-	Level   int16
-	Name    string
-	Icon    string
-	iClient grpcx.Client
-	s       Scene
+	UserId int64
+	Level  int16
+	Name   string
+	Icon   string
+	//iClient grpcx.Client
+	s Scene
 }
 
 func (x *Session) ServeTCP(ctx context.Context, request []byte) error {

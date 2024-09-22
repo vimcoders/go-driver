@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	"go-driver/grpcx"
 	"go-driver/pb"
 
 	etcd "go.etcd.io/etcd/client/v3"
@@ -14,7 +13,7 @@ var handler *Handler
 
 type Handler struct {
 	Option
-	rpc grpcx.Client
+	//rpc grpcx.Client
 	pb.UnimplementedParkourServer
 	*etcd.Client
 }

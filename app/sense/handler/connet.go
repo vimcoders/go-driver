@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"go-driver/app/benchmark/grpcx"
 	"go-driver/etcdx"
 	"go-driver/log"
 	"time"
@@ -30,17 +29,17 @@ func (x *Handler) Connect(ctx context.Context) error {
 			log.Error(err.Error())
 			continue
 		}
-		client, err := grpcx.Dial("udp", service.LocalAddr)
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
+		// client, err := grpcx.Dial("udp", service.LocalAddr)
+		// if err != nil {
+		// 	log.Error(err.Error())
+		// 	continue
+		// }
 		// if _, err := client.Ping(ctx, &pb.PingRequest{}); err != nil {
 		// 	log.Error(err.Error())
 		// 	continue
 		// }
 		handler.Client = cli
-		handler.rpc = client
+		//handler.rpc = client
 		return nil
 	}
 	return nil

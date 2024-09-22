@@ -32,8 +32,7 @@ func (x *Handle) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 }
 
 type Client struct {
-	grpcx.Client
-	pb.ParkourServer
+	pb.ParkourClient
 }
 
 func Dial(network string, addr string) (*Client, error) {
@@ -42,7 +41,7 @@ func Dial(network string, addr string) (*Client, error) {
 		return nil, err
 	}
 	cli.Register(context.Background(), MakeHandler())
-	return &Client{Client: cli}, nil
+	return &Client{ParkourClient: pb.NewParkourClient(cli)}, nil
 }
 
 func (x *Client) BenchmarkQUIC() {
