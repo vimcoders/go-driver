@@ -41,5 +41,5 @@ func (x *Handler) PassportLogin(w driver.Response, r *http.Request) {
 		log.Error(err.Error())
 		return
 	}
-	w.Write(driver.PassportLoginResponse{Token: jwtToken})
+	w.Write(driver.PassportLoginResponse{Token: jwtToken, Methods: x.Methods})
 }

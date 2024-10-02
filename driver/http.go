@@ -6,6 +6,14 @@ type PassportLoginRequest struct {
 	Pwd      string `json:"pwd"`
 }
 
+type Metod struct {
+	Id       int
+	Name     string
+	Request  string
+	Response string
+}
+
 type PassportLoginResponse struct {
-	Token string `json:"token"`
+	Token   string  `json:"token"`
+	Methods []Metod `json:"methods"`
 }
