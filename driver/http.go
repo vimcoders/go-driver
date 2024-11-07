@@ -7,10 +7,10 @@ type PassportLoginRequest struct {
 }
 
 type Metod struct {
-	Id       int
-	Name     string
-	Request  string
-	Response string
+	Id           int
+	MethodName   string
+	RequestName  string
+	ResponseName string
 }
 
 type PassportLoginResponse struct {

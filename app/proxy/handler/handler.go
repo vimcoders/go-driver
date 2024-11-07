@@ -24,13 +24,13 @@ func MakeHandler(ctx context.Context) *Handler {
 	for i := 0; i < len(pb.Parkour_ServiceDesc.Methods); i++ {
 		method := pb.Parkour_ServiceDesc.Methods[i]
 		dec := func(in any) error {
-			methods[i].Request = string(proto.MessageName(in.(proto.Message)).Name())
+			methods[i].RequestName = string(proto.MessageName(in.(proto.Message)).Name())
 			return nil
 		}
 		resp, _ := method.Handler(&pb.UnimplementedParkourServer{}, context.Background(), dec, nil)
 		methods[i].Id = i
-		methods[i].Name = method.MethodName
-		methods[i].Response = string(proto.MessageName(resp.(proto.Message)).Name())
+		methods[i].MethodName = method.MethodName
+		methods[i].ResponseName = string(proto.MessageName(resp.(proto.Message)).Name())
 	}
 	h := &Handler{Methods: methods}
 	if err := h.Parse(); err != nil {

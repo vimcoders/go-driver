@@ -15,7 +15,6 @@ import (
 
 func main() {
 	log.Info("NumCPU: ", runtime.NumCPU())
-
 	quit := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	handler := handler.MakeHandler(ctx)

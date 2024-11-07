@@ -21,6 +21,7 @@ func ListenAndServe(ctx context.Context, listener net.Listener, handler driver.H
 			log.Error(err.Error())
 			continue
 		}
+		log.Debug(conn.RemoteAddr())
 		handler.Handle(ctx, conn)
 	}
 }
