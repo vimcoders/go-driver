@@ -7,27 +7,24 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"go-driver/log"
-	"go-driver/tcpx"
+	"go-driver/udpx"
 	"math/big"
-	"net"
-	"runtime"
 )
 
 func (x *Handler) ListenAndServe(ctx context.Context) {
 	//listener, err := tls.Listen("tcp", x.TCP.LocalAddr, generateTLSConfig())
-	listener, err := net.Listen("tcp", x.TCP.LocalAddr)
+	//listener, err := net.Listen("tcp", x.TCP.LocalAddr)
 	// listener, err := quicx.Listen("udp", x.QUIC.LocalAddr, generateTLSConfig(), &quicx.Config{
 	// 	MaxIdleTimeout: time.Minute,
 	// })
-	if err != nil {
-		panic(err)
-	}
-	for i := 0; i < runtime.NumCPU(); i++ {
-		//go quicx.ListenAndServe(ctx, listener, x)
-		go tcpx.ListenAndServe(ctx, listener, x)
-	}
-	log.Infof("running %s", listener.Addr().String())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	//for i := 0; i < runtime.NumCPU(); i++ {
+	//go quicx.ListenAndServe(ctx, listener, x)
+	go udpx.ListenAndServe(ctx, x.TCP.Internet, x)
+	//}
+	//log.Infof("running %s", listener.Addr().String())
 }
 
 func generateTLSConfig() *tls.Config {
@@ -42,7 +39,6 @@ func generateTLSConfig() *tls.Config {
 	}
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
-
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		panic(err)
@@ -51,5 +47,6 @@ func generateTLSConfig() *tls.Config {
 		Certificates: []tls.Certificate{tlsCert},
 		NextProtos:   []string{"quic-echo-example"},
 		MaxVersion:   tls.VersionTLS13,
+		//MaxVersion:   tls.VersionTLS12,
 	}
 }

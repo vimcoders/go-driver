@@ -8,7 +8,7 @@ import (
 
 	"go-driver/log"
 	"go-driver/pb"
-	"go-driver/tcpx"
+	"go-driver/udpx"
 	//etcd "go.etcd.io/etcd/client/v3"
 )
 
@@ -51,7 +51,7 @@ func (x *Handler) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespon
 // Handle receives and executes redis commands
 func (x *Handler) Handle(ctx context.Context, c net.Conn) {
 	newSession := &Session{}
-	cli := tcpx.NewClient(c, tcpx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
+	cli := udpx.NewClient(c.(*net.UDPConn), udpx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	//cli := tcpx.NewClient(c, tcpx.Option{ServiceDesc: pb.Parkour_ServiceDesc})
 	if err := cli.Register(ctx, newSession); err != nil {
 		log.Error(err.Error())

@@ -12,9 +12,9 @@ type Response interface {
 
 type ResponseWriter struct {
 	W       http.ResponseWriter `json:"-"`
-	Code    int32               `json:"code"`
-	Message string              `json:"message"`
-	Data    any                 `json:"data"`
+	Code    int32               `json:"Code"`
+	Message string              `json:"Message"`
+	Data    any                 `json:"Data"`
 }
 
 func (x *ResponseWriter) Write(i any) (int, error) {

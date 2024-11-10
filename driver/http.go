@@ -2,18 +2,20 @@
 package driver
 
 type PassportLoginRequest struct {
-	Passport string `json:"passport"`
-	Pwd      string `json:"pwd"`
+	Passport string `json:"Passport"`
+	Pwd      string `json:"Pwd"`
 }
 
 type Metod struct {
 	Id           int
-	MethodName   string
-	RequestName  string
-	ResponseName string
+	MethodName   string `json:"MethodName"`
+	RequestName  string `json:"RequestName"`
+	ResponseName string `json:"ResponseName"`
 }
 
 type PassportLoginResponse struct {
-	Token   string  `json:"token"`
-	Methods []Metod `json:"methods"`
+	Token   string  `json:"Token"`
+	Methods []Metod `json:"Methods"`
+	Address string  `json:"Address"`
+	Port    int     `json:"Port"`
 }
