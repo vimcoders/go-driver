@@ -32,12 +32,12 @@ func (x *Handler) Call(ctx context.Context, methodName string, dec func(req inte
 	if len(result) != 2 {
 		return nil, errors.New("len(result) != 2")
 	}
-	if err := result[1].Interface().(error); err != nil {
-		return nil, err
-	}
 	response := result[0].Interface()
 	if response == nil {
 		return nil, errors.New("response == nil")
+	}
+	if err := result[1].Interface(); err != nil {
+		return nil, err.(error)
 	}
 	return response, nil
 }
