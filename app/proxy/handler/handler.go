@@ -26,7 +26,7 @@ func (x *Method) NewRequest() interface{} {
 func (x *Handler) Call(ctx context.Context, methodName string, dec func(req interface{}) error) (interface{}, error) {
 	method := reflect.ValueOf(x).MethodByName(methodName)
 	if ok := method.IsValid(); !ok {
-		return nil, errors.New(fmt.Sprintf("method.IsValid(); !ok  %s", methodName))
+		return nil, fmt.Errorf("method.IsValid(); !ok  %s", methodName)
 	}
 	mt := method.Type()
 	if mt.NumIn() != 2 {
@@ -58,8 +58,7 @@ var handler *Handler
 type Handler struct {
 	Option
 	sqlx.Client
-	//Methods []driver.Metod
-	Metohods []Method
+	Methods []driver.Metod
 }
 
 func MakeHandler(ctx context.Context) *Handler {
@@ -75,29 +74,12 @@ func MakeHandler(ctx context.Context) *Handler {
 		methods[i].MethodName = method.MethodName
 		methods[i].ResponseName = string(proto.MessageName(resp.(proto.Message)).Name())
 	}
-	h := &Handler{}
+	h := &Handler{Methods: methods}
 	if err := h.Parse(); err != nil {
 		panic(err)
 	}
 	if err := h.Connect(ctx); err != nil {
 		panic(err)
-	}
-	t, v := reflect.TypeOf(h), reflect.ValueOf(h)
-	for i := 0; i < v.NumMethod(); i++ {
-		method := v.Method(i)
-		mt := method.Type()
-		if mt.NumIn() != 2 {
-			continue
-		}
-		if mt.NumOut() != 2 {
-			continue
-		}
-		req := reflect.New(mt.In(1).Elem()).Interface()
-		h.Metohods = append(h.Metohods, Method{
-			MethodName: t.Method(i).Name,
-			method:     method,
-			req:        req,
-		})
 	}
 	handler = h
 	return handler
