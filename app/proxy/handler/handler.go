@@ -2,21 +2,57 @@ package handler
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"go-driver/app/proxy/driver"
 	"go-driver/pb"
 	"go-driver/sqlx"
-	"net/http"
+	"reflect"
 
 	"google.golang.org/protobuf/proto"
 )
+
+type Method struct {
+	MethodName string
+	method     reflect.Value
+	req        interface{}
+}
+
+func (x *Method) NewRequest() interface{} {
+	t := reflect.TypeOf(x.req).Elem()
+	return reflect.New(t).Interface()
+}
+
+func (x *Handler) Call(ctx context.Context, methodName string, dec func(req interface{}) error) (interface{}, error) {
+	method := reflect.ValueOf(x).MethodByName(methodName)
+	mt := method.Type()
+	if mt.NumIn() != 2 {
+		return nil, errors.New("mt.NumIn() != 2")
+	}
+	if mt.NumOut() != 2 {
+		return nil, errors.New("mt.NumOut() != 2")
+	}
+	req := reflect.New(mt.In(1).Elem()).Interface()
+	if err := dec(req); err != nil {
+		return nil, err
+	}
+	result := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(req)})
+	if len(result) != 2 {
+		return nil, errors.New("len(result) != 2")
+	}
+	if err := result[1].Interface().(error); err != nil {
+		fmt.Println(err.Error(), methodName, req)
+	}
+	return result[0].Interface(), nil
+}
 
 var handler *Handler
 
 type Handler struct {
 	Option
 	sqlx.Client
-	trees   map[string]func(w driver.Response, r *http.Request)
-	Methods []driver.Metod
+	//Methods []driver.Metod
+	Metohods []Method
 }
 
 func MakeHandler(ctx context.Context) *Handler {
@@ -32,12 +68,29 @@ func MakeHandler(ctx context.Context) *Handler {
 		methods[i].MethodName = method.MethodName
 		methods[i].ResponseName = string(proto.MessageName(resp.(proto.Message)).Name())
 	}
-	h := &Handler{Methods: methods}
+	h := &Handler{}
 	if err := h.Parse(); err != nil {
 		panic(err)
 	}
 	if err := h.Connect(ctx); err != nil {
 		panic(err)
+	}
+	t, v := reflect.TypeOf(h), reflect.ValueOf(h)
+	for i := 0; i < v.NumMethod(); i++ {
+		method := v.Method(i)
+		mt := method.Type()
+		if mt.NumIn() != 2 {
+			continue
+		}
+		if mt.NumOut() != 2 {
+			continue
+		}
+		req := reflect.New(mt.In(1).Elem()).Interface()
+		h.Metohods = append(h.Metohods, Method{
+			MethodName: t.Method(i).Name,
+			method:     method,
+			req:        req,
+		})
 	}
 	handler = h
 	return handler
