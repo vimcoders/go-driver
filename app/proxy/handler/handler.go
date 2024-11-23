@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-driver/app/proxy/driver"
 	"go-driver/pb"
 	"go-driver/sqlx"
@@ -24,6 +25,9 @@ func (x *Method) NewRequest() interface{} {
 
 func (x *Handler) Call(ctx context.Context, methodName string, dec func(req interface{}) error) (interface{}, error) {
 	method := reflect.ValueOf(x).MethodByName(methodName)
+	if ok := method.IsValid(); !ok {
+		return nil, errors.New(fmt.Sprintf("method.IsValid(); !ok  %s", methodName))
+	}
 	mt := method.Type()
 	if mt.NumIn() != 2 {
 		return nil, errors.New("mt.NumIn() != 2")
