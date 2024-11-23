@@ -12,17 +12,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Method struct {
-	MethodName string
-	method     reflect.Value
-	req        interface{}
-}
-
-func (x *Method) NewRequest() interface{} {
-	t := reflect.TypeOf(x.req).Elem()
-	return reflect.New(t).Interface()
-}
-
 func (x *Handler) Call(ctx context.Context, methodName string, dec func(req interface{}) error) (interface{}, error) {
 	method := reflect.ValueOf(x).MethodByName(methodName)
 	if ok := method.IsValid(); !ok {
