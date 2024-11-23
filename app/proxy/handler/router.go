@@ -78,17 +78,16 @@ func (x *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), r.URL.Path)
+		return
 	}
-	if result != nil {
-		response, err := json.Marshal(result)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-		if _, err := w.Write(response); err != nil {
-			fmt.Println(err.Error())
-			return
-		}
+	response, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	if _, err := w.Write(response); err != nil {
+		fmt.Println(err.Error())
+		return
 	}
 }

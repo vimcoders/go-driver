@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go-driver/app/proxy/driver"
 	"go-driver/pb"
 	"go-driver/sqlx"
@@ -41,9 +40,13 @@ func (x *Handler) Call(ctx context.Context, methodName string, dec func(req inte
 		return nil, errors.New("len(result) != 2")
 	}
 	if err := result[1].Interface().(error); err != nil {
-		fmt.Println(err.Error(), methodName, req)
+		return nil, err
 	}
-	return result[0].Interface(), nil
+	response := result[0].Interface()
+	if response == nil {
+		return nil, errors.New("response == nil")
+	}
+	return response, nil
 }
 
 var handler *Handler
