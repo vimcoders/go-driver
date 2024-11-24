@@ -7,9 +7,6 @@ type Buffer = driver.Buffer
 type Account = driver.Account
 type Response = driver.Response
 type ResponsePusher = driver.ResponsePusher
-type PassportLoginRequest = driver.PassportLoginRequest
-type PassportLoginResponse = driver.PassportLoginResponse
-type Metod = driver.Metod
 
 func NewBuffer(size int) Buffer {
 	return driver.NewBuffer(size)

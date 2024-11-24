@@ -1,0 +1,31 @@
+syntax = "proto3";
+package pb;
+option go_package = "../pb";
+
+message Method {
+    int32 Id = 1;
+    string MethodName = 2;
+    string RequestName = 3;
+    string ResponseName = 4;
+}
+
+message PassportLoginRequest {
+    string Passport = 1;
+	string Pwd = 2;
+}
+
+message PassportLoginResponse {
+    string Token = 1;
+    int64 ExpiresAt = 2; // 过期时间3年
+    int64 IssuedAt = 3; // 签发时间
+    int64 NotBefore = 4; // 生效时间
+    repeated Method Methods = 5; // 所有的方法
+}
+
+service Proxy {
+	rpc PassportLogin(PassportLoginRequest) returns (PassportLoginResponse) {}
+}
+
+// protoc --go_out=../ --go-grpc_out=../ *.proto
+// go install google.golang.org/protobuf/cmd/protoc-gen-go
+// go install google.golang.org/grpc/cmd/protoc-gen-go-grpc

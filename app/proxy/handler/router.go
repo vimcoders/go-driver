@@ -46,11 +46,6 @@ func (x *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		r.Body.Close()
 	}()
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "*")
-	w.Header().Set("Access-Control-Expose-Headers", "*")
-	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	log.Info(r.URL.Path)
 	paths := strings.Split(strings.TrimLeft(r.URL.Path, "/"), "/")
 	if len(paths) <= 0 {
@@ -67,27 +62,36 @@ func (x *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		ctx.WithValue(k, v[0])
 	}
-	result, err := x.Call(ctx, methodName, func(req interface{}) error {
+	for i := 0; i < len(x.ServiceDesc.Methods); i++ {
+		if methodName != x.ServiceDesc.Methods[i].MethodName {
+			continue
+		}
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
-			return err
+			return
 		}
-		if err := json.Unmarshal(b, req); err != nil {
-			return err
+		dec := func(in any) error {
+			if err := json.Unmarshal(b, in); err != nil {
+				return err
+			}
+			return nil
 		}
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err.Error(), r.URL.Path)
-		return
-	}
-	response, err := json.Marshal(result)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	if _, err := w.Write(response); err != nil {
-		fmt.Println(err.Error())
-		return
+		reply, err := x.ServiceDesc.Methods[i].Handler(x, ctx, dec, nil)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		response, err := json.Marshal(reply)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Expose-Headers", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		if _, err := w.Write(response); err != nil {
+			fmt.Println(err.Error())
+			return
+		}
 	}
 }

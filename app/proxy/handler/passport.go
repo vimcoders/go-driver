@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"go-driver/app/proxy/driver"
+	"go-driver/pb"
 	"go-driver/token"
 )
 
-func (x *Handler) PassportLogin(ctx context.Context, req *driver.PassportLoginRequest) (*driver.PassportLoginResponse, error) {
+func (x *Handler) PassportLogin(ctx context.Context, req *pb.PassportLoginRequest) (*pb.PassportLoginResponse, error) {
 	fmt.Println(ctx.Value("Authorization"))
 	// TODO :: 校验用户名和密码是否符合规则
 	hash := sha256.Sum256([]byte(req.Pwd))
@@ -21,11 +22,11 @@ func (x *Handler) PassportLogin(ctx context.Context, req *driver.PassportLoginRe
 		Created:  time.Now(),
 	}
 	if err := x.Insert(&account); err != nil {
-		return &driver.PassportLoginResponse{}, err
+		return &pb.PassportLoginResponse{}, err
 	}
 	jwtToken, err := token.GenToken(account.UserId, req.Passport, "", "", []byte(x.Token.Key))
 	if err != nil {
-		return &driver.PassportLoginResponse{}, err
+		return &pb.PassportLoginResponse{}, err
 	}
-	return &driver.PassportLoginResponse{Token: jwtToken, Address: "127.0.0.1", Port: 9600}, nil
+	return &pb.PassportLoginResponse{Token: jwtToken, Methods: x.Methods}, nil
 }
