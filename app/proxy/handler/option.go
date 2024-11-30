@@ -12,7 +12,7 @@ type Option = driver.Option
 
 func (x *Handler) Parse() error {
 	var fileName string
-	flag.StringVar(&fileName, "option", "proxy.conf", "proxy.conf")
+	flag.StringVar(&fileName, "f", "proxy.yaml", "proxy.yaml")
 	flag.Parse()
 	ymalBytes, err := os.ReadFile(fileName)
 	if err != nil {

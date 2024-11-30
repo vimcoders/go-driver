@@ -20,7 +20,7 @@ etcd:
   version: "project001/namespace/develop/v2"
 
 mysql:
-  host: "root:root@tcp(127.0.0.1:3306)/proxy?charset=utf8&parseTime=True&loc=Local"
+  host: "root:root@tcp(172.30.144.1:3306)/proxy?charset=utf8&parseTime=True&loc=Local"
 
 mongo:
   host: "mongodb://admin:admin@127.0.0.1:27017"

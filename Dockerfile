@@ -15,4 +15,5 @@ FROM scratch
 ENV TZ Asia/Shanghai
 WORKDIR /app
 COPY --from=builder /app/proxy /app/proxy
+COPY --from=builder /build/app/proxy/proxy.yaml /app/proxy.yaml
 CMD ["./proxy"]
