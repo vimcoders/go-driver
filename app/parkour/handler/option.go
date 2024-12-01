@@ -2,8 +2,9 @@ package handler
 
 import (
 	"flag"
-	"go-driver/app/parkour/driver"
 	"os"
+
+	"github.com/vimcoders/go-driver/app/parkour/driver"
 
 	"gopkg.in/yaml.v3"
 )

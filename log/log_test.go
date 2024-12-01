@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	syslog "go-driver/log"
+	syslog "github.com/vimcoders/go-driver/log"
 
 	"github.com/golang/glog"
 )

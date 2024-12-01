@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
 
 	"google.golang.org/api/pubsub/v1"
 )

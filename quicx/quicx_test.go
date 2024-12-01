@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"go-driver/log"
-	"go-driver/quicx"
+	"github.com/vimcoders/go-driver/log"
+	"github.com/vimcoders/go-driver/quicx"
 )
 
 type Handler struct {

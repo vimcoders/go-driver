@@ -2,9 +2,11 @@ package tcpx
 
 import (
 	"context"
-	"go-driver/pb"
-	"go-driver/tcpx"
 	"runtime/debug"
+
+	"github.com/vimcoders/go-driver/tcpx"
+
+	"github.com/vimcoders/go-driver/pb"
 )
 
 type Client struct {

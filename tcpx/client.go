@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-driver/log"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/vimcoders/go-driver/log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"

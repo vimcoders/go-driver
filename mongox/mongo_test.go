@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"go-driver/mongox"
+	"github.com/vimcoders/go-driver/mongox"
 )
 
 type Document struct {

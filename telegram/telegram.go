@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
 )
 
 const (

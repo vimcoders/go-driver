@@ -2,7 +2,7 @@
 package driver
 
 import (
-	"go-driver/driver"
+	"github.com/vimcoders/go-driver/driver"
 )
 
 type User = driver.User

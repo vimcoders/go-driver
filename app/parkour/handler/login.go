@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"go-driver/app/parkour/driver"
-	"go-driver/log"
-	"go-driver/pb"
+	"github.com/vimcoders/go-driver/log"
+	"github.com/vimcoders/go-driver/pb"
+
+	"github.com/vimcoders/go-driver/app/parkour/driver"
 
 	"google.golang.org/protobuf/proto"
 )

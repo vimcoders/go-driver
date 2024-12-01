@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"go-driver/app/chat/handler"
-	"go-driver/log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	"github.com/vimcoders/go-driver/app/chat/handler"
+	"github.com/vimcoders/go-driver/log"
 )
 
 func main() {

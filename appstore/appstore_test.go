@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"go-driver/appstore"
+	"github.com/vimcoders/go-driver/appstore"
 )
 
 func TestVerify(t *testing.T) {

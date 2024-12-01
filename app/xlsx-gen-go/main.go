@@ -1,6 +1,6 @@
 package main
 
-import "go-driver/app/xlsx-gen-go/generator"
+import "github.com/vimcoders/go-driver/app/xlsx-gen-go/generator"
 
 func main() {
 	g, err := generator.NewGenerator()

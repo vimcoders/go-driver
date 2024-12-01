@@ -3,9 +3,10 @@ package grpcx
 import (
 	"crypto/tls"
 	"fmt"
-	"go-driver/quicx"
 	"net"
 	"time"
+
+	"github.com/vimcoders/go-driver/quicx"
 )
 
 func Dial(network string, addr string, opt Option) (Client, error) {

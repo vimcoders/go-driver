@@ -13,11 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"go-driver/app/parkour/driver"
 	"go-driver/grpcx"
 	"go-driver/log"
 	"go-driver/mongox"
-	"go-driver/pb"
+
+	"github.com/vimcoders/go-driver/pb"
+
+	"github.com/vimcoders/go-driver/app/parkour/driver"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )

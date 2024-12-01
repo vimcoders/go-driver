@@ -1,9 +1,11 @@
 package handler
 
 import (
-	"go-driver/app/parkour/driver"
-	"go-driver/log"
-	"go-driver/mongox"
+	"github.com/vimcoders/go-driver/app/parkour/driver"
+
+	"github.com/vimcoders/go-driver/mongox"
+
+	"github.com/vimcoders/go-driver/log"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

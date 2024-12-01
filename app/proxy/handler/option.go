@@ -2,8 +2,9 @@ package handler
 
 import (
 	"flag"
-	"go-driver/app/proxy/driver"
 	"os"
+
+	"github.com/vimcoders/go-driver/app/proxy/driver"
 
 	"gopkg.in/yaml.v3"
 )

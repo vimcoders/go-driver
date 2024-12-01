@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"go-driver/pb"
+	"github.com/vimcoders/go-driver/pb"
 
 	etcd "go.etcd.io/etcd/client/v3"
 )

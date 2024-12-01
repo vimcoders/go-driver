@@ -8,8 +8,9 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/parkour/handler"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/app/parkour/handler"
+
+	"github.com/vimcoders/go-driver/log"
 )
 
 func main() {

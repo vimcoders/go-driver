@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
-	"go-driver/log"
-	"go-driver/pb"
 	"runtime"
 	"time"
+
+	"github.com/vimcoders/go-driver/pb"
+
+	"github.com/vimcoders/go-driver/log"
 )
 
 type Session struct {

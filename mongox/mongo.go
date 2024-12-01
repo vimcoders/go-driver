@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 
-	"go-driver/driver"
+	"github.com/vimcoders/go-driver/driver"
 
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -6,8 +6,8 @@ import (
 	"net"
 	"runtime/debug"
 
-	"go-driver/driver"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/driver"
+	"github.com/vimcoders/go-driver/log"
 )
 
 // // Config stores tcp server properties

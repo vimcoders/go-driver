@@ -8,9 +8,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"go-driver/token"
 	"os"
 	"testing"
+
+	"github.com/vimcoders/go-driver/token"
 )
 
 func Encrypt(plantText, key []byte) ([]byte, error) {

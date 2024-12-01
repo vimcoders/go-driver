@@ -1,8 +1,9 @@
 package sqlx
 
 import (
-	"go-driver/log"
 	"time"
+
+	"github.com/vimcoders/go-driver/log"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

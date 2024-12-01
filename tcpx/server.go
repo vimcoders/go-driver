@@ -4,8 +4,9 @@ import (
 	"context"
 	"net"
 
-	"go-driver/driver"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
+
+	"github.com/vimcoders/go-driver/driver"
 )
 
 // ListenAndServe binds port and handle requests, blocking until close

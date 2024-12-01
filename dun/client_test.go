@@ -2,15 +2,16 @@ package dun_test
 
 import (
 	"fmt"
-	"go-driver/dun"
 	"net/url"
 	"testing"
+
+	"github.com/vimcoders/go-driver/dun"
 )
 
 func TestCheckText(t *testing.T) {
 	params := url.Values{
 		"dataId":  []string{"ebfcad1c-dba1-490c-b4de-e784c2691768"},
-		"content": []string{"易盾你妈的！"},
+		"content": []string{"易盾你！"},
 		//"dataType": []string{"1"},
 		//"ip": []string{"123.115.77.137"},
 		//"account": []string{"golang@163.com"},

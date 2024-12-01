@@ -2,8 +2,9 @@ package handler
 
 import (
 	"flag"
-	"go-driver/app/balance/driver"
 	"os"
+
+	"github.com/vimcoders/go-driver/app/balance/driver"
 
 	"gopkg.in/yaml.v3"
 )

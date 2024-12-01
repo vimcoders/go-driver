@@ -2,8 +2,9 @@ package handler
 
 import (
 	"context"
-	"go-driver/pb"
-	"go-driver/sqlx"
+
+	"github.com/vimcoders/go-driver/pb"
+	"github.com/vimcoders/go-driver/sqlx"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"

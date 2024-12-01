@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"go-driver/app/proxy/driver"
-	"go-driver/pb"
 	"go-driver/token"
+
+	"github.com/vimcoders/go-driver/pb"
 )
 
 func (x *Handler) PassportLogin(ctx context.Context, req *pb.PassportLoginRequest) (*pb.PassportLoginResponse, error) {

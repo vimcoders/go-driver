@@ -2,8 +2,9 @@ package handler
 
 import (
 	"flag"
-	"go-driver/app/sense/driver"
 	"os"
+
+	"github.com/vimcoders/go-driver/app/sense/driver"
 
 	"gopkg.in/yaml.v3"
 )

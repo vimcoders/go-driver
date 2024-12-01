@@ -2,7 +2,8 @@ package handler
 
 import (
 	"context"
-	"go-driver/log"
+
+	"github.com/vimcoders/go-driver/log"
 )
 
 func (x *Handler) Connect(ctx context.Context) error {

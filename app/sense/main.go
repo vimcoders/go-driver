@@ -7,8 +7,9 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/sense/handler"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
+
+	"github.com/vimcoders/go-driver/app/sense/handler"
 )
 
 func main() {

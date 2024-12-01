@@ -6,9 +6,11 @@ import (
 	"runtime"
 	"time"
 
-	"go-driver/log"
-	"go-driver/pb"
-	"go-driver/udpx"
+	"github.com/vimcoders/go-driver/pb"
+
+	"github.com/vimcoders/go-driver/udpx"
+
+	"github.com/vimcoders/go-driver/log"
 	//etcd "go.etcd.io/etcd/client/v3"
 )
 

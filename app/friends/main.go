@@ -1,11 +1,12 @@
 package main
 
 import (
-	"go-driver/log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	"github.com/vimcoders/go-driver/log"
 )
 
 func main() {

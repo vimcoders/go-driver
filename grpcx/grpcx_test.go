@@ -25,15 +25,16 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"go-driver/grpcx"
-	"go-driver/pb"
-	"go-driver/quicx"
 	"math/big"
 	"net"
 	"net/http"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/vimcoders/go-driver/grpcx"
+	"github.com/vimcoders/go-driver/pb"
+	"github.com/vimcoders/go-driver/quicx"
 )
 
 type Handle struct {

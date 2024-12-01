@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"

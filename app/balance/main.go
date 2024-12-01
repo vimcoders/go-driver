@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/balance/handler"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/app/balance/handler"
+	"github.com/vimcoders/go-driver/log"
 )
 
 func main() {

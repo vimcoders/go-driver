@@ -2,8 +2,9 @@
 package driver
 
 import (
-	"go-driver/mathx"
 	"math"
+
+	"github.com/vimcoders/go-driver/mathx"
 )
 
 type Item struct {

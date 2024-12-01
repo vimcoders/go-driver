@@ -2,13 +2,14 @@
 package main
 
 import (
-	"go-driver/app/benchmark/grpcx"
-	"go-driver/log"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/vimcoders/go-driver/app/benchmark/grpcx"
+	"github.com/vimcoders/go-driver/log"
 
 	_ "net/http/pprof"
 )

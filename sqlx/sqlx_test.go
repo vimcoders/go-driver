@@ -2,10 +2,11 @@ package sqlx_test
 
 import (
 	"fmt"
-	"go-driver/sqlx"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/vimcoders/go-driver/sqlx"
 )
 
 // go test -v -bench=BenchmarkRegister

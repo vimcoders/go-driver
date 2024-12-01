@@ -7,8 +7,9 @@ import (
 	"runtime"
 	"syscall"
 
-	"go-driver/app/proxy/handler"
-	"go-driver/log"
+	"github.com/vimcoders/go-driver/log"
+
+	"github.com/vimcoders/go-driver/app/proxy/handler"
 )
 
 func main() {
