@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"go-driver/grpcx"
-	"go-driver/log"
-	"go-driver/mongox"
+	"github.com/vimcoders/go-driver/grpcx"
+	"github.com/vimcoders/go-driver/log"
+	"github.com/vimcoders/go-driver/mongox"
 
 	"github.com/vimcoders/go-driver/pb"
 

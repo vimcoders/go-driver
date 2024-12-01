@@ -3,10 +3,11 @@ package grpcx
 import (
 	"context"
 	"fmt"
-	"go-driver/grpcx"
-	"go-driver/pb"
 	"runtime"
 	"time"
+
+	"github.com/vimcoders/go-driver/grpcx"
+	"github.com/vimcoders/go-driver/pb"
 )
 
 type Handle struct {

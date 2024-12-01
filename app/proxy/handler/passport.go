@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"go-driver/app/proxy/driver"
-	"go-driver/token"
+	"github.com/vimcoders/go-driver/app/proxy/driver"
+
+	"github.com/vimcoders/go-driver/token"
 
 	"github.com/vimcoders/go-driver/pb"
 )
