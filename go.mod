@@ -1,4 +1,4 @@
-module go-driver
+module github.com/vimcoders/go-driver
 
 go 1.21
 
@@ -11,9 +11,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.42.0
 	github.com/tealeg/xlsx/v3 v3.3.6
+	github.com/xtaci/kcp-go v5.4.20+incompatible
 	go.etcd.io/etcd/client/v3 v3.5.14
 	go.mongodb.org/mongo-driver v1.14.0
 	golang.org/x/oauth2 v0.18.0
+	golang.org/x/text v0.14.0
 	google.golang.org/api v0.172.0
 	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.34.2
@@ -65,7 +67,7 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/xtaci/kcp-go v5.4.20+incompatible // indirect
+	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.etcd.io/etcd/api/v3 v3.5.14 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.14 // indirect
@@ -84,7 +86,6 @@ require (
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.20.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240311132316-a219d84964c2 // indirect
